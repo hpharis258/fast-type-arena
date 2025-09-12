@@ -1,42 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Type Racing Game Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core Colors */
+    --background: 220 13% 9%;
+    --foreground: 220 9% 89%;
+    
+    /* Game Colors */
+    --game-bg: 220 13% 12%;
+    --game-text: 220 9% 65%;
+    --game-text-typed: 47 96% 53%;
+    --game-text-current: 220 9% 89%;
+    --game-text-error: 0 84% 60%;
+    --game-text-untyped: 220 9% 35%;
+    
+    /* Interface */
+    --card: 220 13% 12%;
+    --card-foreground: 220 9% 89%;
+    
+    --primary: 47 96% 53%;
+    --primary-foreground: 220 13% 9%;
+    
+    --secondary: 220 13% 18%;
+    --secondary-foreground: 220 9% 89%;
+    
+    --muted: 220 13% 18%;
+    --muted-foreground: 220 9% 65%;
+    
+    --accent: 210 100% 56%;
+    --accent-foreground: 220 13% 9%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 220 9% 89%;
+    
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
+    --ring: 47 96% 53%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(47 96% 53%), hsl(38 92% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(210 100% 56%), hsl(217 91% 60%));
+    
+    /* Shadows */
+    --shadow-glow: 0 0 20px hsl(47 96% 53% / 0.15);
+    --shadow-card: 0 4px 20px hsl(220 13% 5% / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 98%;
 
@@ -92,6 +111,94 @@ All colors MUST be HSL.
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter;
+  }
+  
+  /* Custom fonts */
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  
+  .font-inter {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  /* Game Text Styles */
+  .game-text {
+    @apply font-mono text-xl leading-relaxed tracking-wide;
+    transition: var(--transition-smooth);
+  }
+  
+  .char-correct {
+    @apply text-game-text-typed;
+  }
+  
+  .char-incorrect {
+    @apply text-game-text-error bg-destructive/20 rounded-sm;
+  }
+  
+  .char-current {
+    @apply text-game-text-current bg-primary/20 rounded-sm;
+    animation: blink 1.2s infinite;
+  }
+  
+  .char-untyped {
+    @apply text-game-text-untyped;
+  }
+  
+  /* Stats Display */
+  .stat-card {
+    @apply bg-card border border-border rounded-lg p-4 shadow-[var(--shadow-card)];
+    transition: var(--transition-smooth);
+  }
+  
+  .stat-card:hover {
+    @apply border-primary/30;
+    box-shadow: var(--shadow-glow);
+  }
+  
+  /* Button Variants */
+  .btn-game {
+    @apply bg-primary text-primary-foreground hover:opacity-90 rounded-lg px-6 py-3 font-medium;
+    background: var(--gradient-primary);
+    transition: var(--transition-smooth);
+  }
+  
+  .btn-game:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-6 py-3 font-medium;
+    transition: var(--transition-smooth);
+  }
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+/* Typing animation */
+@keyframes typeCorrect {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.char-animate {
+  animation: typeCorrect 0.1s ease-out;
 }
 
 @layer base {

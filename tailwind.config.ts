@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        inter: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -47,6 +51,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "game-bg": "hsl(var(--game-bg))",
+        "game-text": "hsl(var(--game-text))",
+        "game-text-typed": "hsl(var(--game-text-typed))",
+        "game-text-current": "hsl(var(--game-text-current))",
+        "game-text-error": "hsl(var(--game-text-error))",
+        "game-text-untyped": "hsl(var(--game-text-untyped))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
