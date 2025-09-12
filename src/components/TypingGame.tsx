@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { AuthDialog } from '@/components/AuthDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { Trophy, LogOut } from 'lucide-react';
 
 interface GameStats {
   wpm: number;
@@ -33,7 +39,11 @@ export default function TypingGame() {
     totalChars: 0
   });
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [savingScore, setSavingScore] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Generate random text
   const generateText = useCallback(() => {
@@ -86,6 +96,43 @@ export default function TypingGame() {
     }
   };
 
+  // Save score to database
+  const saveScore = useCallback(async (gameStats: GameStats) => {
+    if (!user) return;
+    
+    setSavingScore(true);
+    try {
+      const { error } = await supabase
+        .from('scores')
+        .insert({
+          user_id: user.id,
+          wpm: gameStats.wpm,
+          accuracy: gameStats.accuracy,
+          correct_chars: gameStats.correctChars,
+          incorrect_chars: gameStats.incorrectChars,
+          total_chars: gameStats.totalChars
+        });
+
+      if (error) {
+        console.error('Error saving score:', error);
+        toast({
+          title: "Error saving score",
+          description: "There was an issue saving your score. Please try again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Score saved!",
+          description: `Your score of ${gameStats.wpm} WPM has been saved to the leaderboard.`
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setSavingScore(false);
+    }
+  }, [user, toast]);
+
   // Game timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -105,6 +152,13 @@ export default function TypingGame() {
     return () => clearInterval(interval);
   }, [gameState]);
 
+  // Save score when game finishes
+  useEffect(() => {
+    if (gameState === 'finished' && user && stats.totalChars > 0) {
+      saveScore(stats);
+    }
+  }, [gameState, user, stats, saveScore]);
+
   // Initialize game
   useEffect(() => {
     generateText();
@@ -123,6 +177,7 @@ export default function TypingGame() {
     setUserInput('');
     setTimeLeft(GAME_DURATION);
     setStartTime(null);
+    setSavingScore(false);
     setStats({
       wpm: 0,
       accuracy: 100,
@@ -132,6 +187,14 @@ export default function TypingGame() {
     });
     generateText();
     setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out."
+    });
   };
 
   // Render text with highlighting
@@ -180,12 +243,36 @@ export default function TypingGame() {
             </div>
             
             <div className="space-y-4">
-              <Button onClick={resetGame} className="btn-game">
-                Play Again
-              </Button>
-              <p className="text-muted-foreground">
-                Playing as guest - sign up to save your scores!
-              </p>
+              <div className="flex gap-4 justify-center">
+                <Button onClick={resetGame} className="btn-game">
+                  Play Again
+                </Button>
+                <Button onClick={() => navigate('/leaderboard')} variant="secondary">
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Leaderboard
+                </Button>
+              </div>
+              
+              {savingScore && (
+                <p className="text-primary">Saving your score...</p>
+              )}
+              
+              {user ? (
+                <p className="text-muted-foreground">
+                  Score saved to leaderboard! Playing as {user.email}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">
+                    Playing as guest - sign up to save your scores!
+                  </p>
+                  <AuthDialog>
+                    <Button variant="outline" size="sm">
+                      Sign Up to Save Scores
+                    </Button>
+                  </AuthDialog>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -197,10 +284,40 @@ export default function TypingGame() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       {/* Header */}
       <div className="w-full max-w-4xl mb-8">
-        <h1 className="text-4xl font-bold text-center mb-2">TypeRacingGame</h1>
-        <p className="text-center text-muted-foreground">
-          {gameState === 'waiting' ? 'Start typing to begin the race!' : 'Type as fast and accurately as you can!'}
-        </p>
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex-1">
+            <h1 className="text-4xl font-bold text-center mb-2">TypeRacingGame</h1>
+            <p className="text-center text-muted-foreground">
+              {gameState === 'waiting' ? 'Start typing to begin the race!' : 'Type as fast and accurately as you can!'}
+            </p>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/leaderboard')} variant="ghost" size="sm">
+              <Trophy className="w-4 h-4 mr-2" />
+              Leaderboard
+            </Button>
+            
+            {user ? (
+              <Button onClick={handleSignOut} variant="ghost" size="sm">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            ) : (
+              <AuthDialog>
+                <Button variant="ghost" size="sm">
+                  Login
+                </Button>
+              </AuthDialog>
+            )}
+          </div>
+        </div>
+        
+        {user && (
+          <p className="text-center text-sm text-muted-foreground">
+            Welcome back, {user.email}! Your scores will be saved.
+          </p>
+        )}
       </div>
 
       {/* Stats Bar */}
