@@ -6,7 +6,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3 } from 'lucide-react';
 
 interface GameStats {
   wpm: number;
@@ -293,12 +293,22 @@ export default function TypingGame() {
               Leaderboard
             </Button>
             
-            <div>
+            <div className="flex gap-2">
               {user ? (
-                <Button onClick={handleSignOut} variant="ghost">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
+                <>
+                  <Button onClick={() => navigate('/stats')} variant="ghost">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Stats
+                  </Button>
+                  <Button onClick={() => navigate('/settings')} variant="ghost">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </Button>
+                  <Button onClick={handleSignOut} variant="ghost">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
               ) : (
                 <AuthDialog>
                   <Button variant="ghost">
@@ -318,12 +328,6 @@ export default function TypingGame() {
           <p className="text-muted-foreground mb-4">
             {gameState === 'waiting' ? 'Start typing to begin the race!' : 'Type as fast and accurately as you can!'}
           </p>
-          
-          {user && (
-            <p className="text-sm text-muted-foreground">
-              Welcome back, {user.email}! Your scores will be saved.
-            </p>
-          )}
         </div>
 
       {/* Stats Bar */}
