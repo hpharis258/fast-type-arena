@@ -281,44 +281,50 @@ export default function TypingGame() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="w-full max-w-4xl mb-8">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold text-center mb-2">TypeRacingGame</h1>
-            <p className="text-center text-muted-foreground">
-              {gameState === 'waiting' ? 'Start typing to begin the race!' : 'Type as fast and accurately as you can!'}
-            </p>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button onClick={() => navigate('/leaderboard')} variant="ghost" size="sm">
+      <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">TypeRacingGame</h1>
+            
+            <Button onClick={() => navigate('/leaderboard')} variant="ghost">
               <Trophy className="w-4 h-4 mr-2" />
               Leaderboard
             </Button>
             
-            {user ? (
-              <Button onClick={handleSignOut} variant="ghost" size="sm">
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            ) : (
-              <AuthDialog>
-                <Button variant="ghost" size="sm">
-                  Login
+            <div>
+              {user ? (
+                <Button onClick={handleSignOut} variant="ghost">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
                 </Button>
-              </AuthDialog>
-            )}
+              ) : (
+                <AuthDialog>
+                  <Button variant="ghost">
+                    Login
+                  </Button>
+                </AuthDialog>
+              )}
+            </div>
           </div>
         </div>
-        
-        {user && (
-          <p className="text-center text-sm text-muted-foreground">
-            Welcome back, {user.email}! Your scores will be saved.
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        {/* Game Title and Status */}
+        <div className="w-full max-w-4xl mb-8 text-center">
+          <p className="text-muted-foreground mb-4">
+            {gameState === 'waiting' ? 'Start typing to begin the race!' : 'Type as fast and accurately as you can!'}
           </p>
-        )}
-      </div>
+          
+          {user && (
+            <p className="text-sm text-muted-foreground">
+              Welcome back, {user.email}! Your scores will be saved.
+            </p>
+          )}
+        </div>
 
       {/* Stats Bar */}
       <div className="w-full max-w-4xl mb-6">
@@ -351,22 +357,22 @@ export default function TypingGame() {
             value={userInput}
             onChange={handleInputChange}
             disabled={gameState !== 'waiting' && gameState !== 'playing'}
-            className="w-full bg-transparent border-2 border-muted rounded-lg p-4 text-xl font-mono focus:border-primary focus:outline-none transition-colors"
-            placeholder={gameState === 'waiting' ? "Click here and start typing..." : ""}
+            className="absolute opacity-0 pointer-events-none"
             autoComplete="off"
             spellCheck={false}
           />
         </CardContent>
       </Card>
 
-      {/* Controls */}
-      <div className="mt-6 flex space-x-4">
-        <Button onClick={resetGame} variant="secondary" className="btn-secondary">
-          Reset
-        </Button>
-        <Button onClick={generateText} variant="secondary" className="btn-secondary">
-          New Text
-        </Button>
+        {/* Controls */}
+        <div className="mt-6 flex space-x-4">
+          <Button onClick={resetGame} variant="secondary" className="btn-secondary">
+            Reset
+          </Button>
+          <Button onClick={generateText} variant="secondary" className="btn-secondary">
+            New Text
+          </Button>
+        </div>
       </div>
     </div>
   );
