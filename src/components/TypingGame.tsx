@@ -344,25 +344,26 @@ export default function TypingGame() {
         </div>
       </div>
 
-      {/* Game Area */}
-      <Card className="w-full max-w-4xl bg-game-bg">
-        <CardContent className="p-8">
-          <div className="game-text mb-6 text-center leading-loose">
-            {renderText()}
-          </div>
-          
-          <input
-            ref={inputRef}
-            type="text"
-            value={userInput}
-            onChange={handleInputChange}
-            disabled={gameState !== 'waiting' && gameState !== 'playing'}
-            className="absolute opacity-0 pointer-events-none"
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </CardContent>
-      </Card>
+        {/* Game Area */}
+        <Card className="w-full max-w-4xl bg-game-bg cursor-text" onClick={() => inputRef.current?.focus()}>
+          <CardContent className="p-8 relative">
+            <div className="game-text mb-6 text-center leading-loose">
+              {renderText()}
+            </div>
+            
+            <input
+              ref={inputRef}
+              type="text"
+              value={userInput}
+              onChange={handleInputChange}
+              disabled={gameState !== 'waiting' && gameState !== 'playing'}
+              className="absolute opacity-0 -z-10 w-full h-full"
+              autoComplete="off"
+              spellCheck={false}
+              autoFocus
+            />
+          </CardContent>
+        </Card>
 
         {/* Controls */}
         <div className="mt-6 flex space-x-4">
