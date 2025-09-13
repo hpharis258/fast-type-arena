@@ -32,8 +32,15 @@ export default function Leaderboard() {
       const { data, error } = await supabase
         .from('scores')
         .select(`
-          *,
-          profiles (
+          id,
+          wpm,
+          accuracy,
+          correct_chars,
+          incorrect_chars,
+          total_chars,
+          created_at,
+          user_id,
+          profiles!scores_user_id_fkey (
             display_name
           )
         `)
@@ -45,7 +52,7 @@ export default function Leaderboard() {
         return;
       }
 
-      setScores(data || []);
+      setScores(data as LeaderboardEntry[] || []);
     } catch (error) {
       console.error('Error:', error);
     } finally {

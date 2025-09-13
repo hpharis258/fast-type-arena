@@ -69,7 +69,15 @@ export type Database = {
           user_id?: string
           wpm?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
     }
     Views: {
