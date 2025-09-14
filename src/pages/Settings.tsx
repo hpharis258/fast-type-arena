@@ -9,7 +9,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Lock, Trash2, AlertTriangle } from 'lucide-react';
+import { useTheme, predefinedThemes } from '@/hooks/useTheme';
+import ThemeCustomizer from '@/components/ThemeCustomizer';
+import { ArrowLeft, Lock, Trash2, AlertTriangle, Palette, Check } from 'lucide-react';
 
 export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -18,6 +20,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const { user, signOut } = useAuth();
+  const { currentTheme, setTheme, customThemes, removeCustomTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -171,6 +174,117 @@ export default function Settings() {
         </div>
 
         <div className="space-y-6">
+          {/* Theme Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                Theme Selection
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium mb-3 block">Predefined Themes</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    {predefinedThemes.map((theme) => (
+                      <button
+                        key={theme.id}
+                        onClick={() => setTheme(theme)}
+                        className={`relative p-3 rounded-lg border-2 transition-all hover:scale-105 ${
+                          currentTheme.id === theme.id 
+                            ? 'border-primary shadow-[0_0_20px_hsl(var(--primary)_/_0.3)]' 
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        style={{
+                          backgroundColor: `hsl(${theme.colors.background})`,
+                          color: `hsl(${theme.colors.foreground})`
+                        }}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex gap-1">
+                            <div 
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: `hsl(${theme.colors.primary})` }}
+                            />
+                            <div 
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: `hsl(${theme.colors.accent})` }}
+                            />
+                            <div 
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: `hsl(${theme.colors['game-text-typed']})` }}
+                            />
+                          </div>
+                          <span className="text-xs font-medium">{theme.name}</span>
+                        </div>
+                        {currentTheme.id === theme.id && (
+                          <Check className="absolute -top-1 -right-1 w-4 h-4 text-primary bg-background rounded-full" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {customThemes.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Custom Themes</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                      {customThemes.map((theme) => (
+                        <div key={theme.id} className="relative">
+                          <button
+                            onClick={() => setTheme(theme)}
+                            className={`w-full p-3 rounded-lg border-2 transition-all hover:scale-105 ${
+                              currentTheme.id === theme.id 
+                                ? 'border-primary shadow-[0_0_20px_hsl(var(--primary)_/_0.3)]' 
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                            style={{
+                              backgroundColor: `hsl(${theme.colors.background})`,
+                              color: `hsl(${theme.colors.foreground})`
+                            }}
+                          >
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="flex gap-1">
+                                <div 
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: `hsl(${theme.colors.primary})` }}
+                                />
+                                <div 
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: `hsl(${theme.colors.accent})` }}
+                                />
+                                <div 
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: `hsl(${theme.colors['game-text-typed']})` }}
+                                />
+                              </div>
+                              <span className="text-xs font-medium">{theme.name}</span>
+                            </div>
+                            {currentTheme.id === theme.id && (
+                              <Check className="absolute -top-1 -right-1 w-4 h-4 text-primary bg-background rounded-full" />
+                            )}
+                          </button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute -top-2 -left-2 w-6 h-6 p-0"
+                            onClick={() => removeCustomTheme(theme.id)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Theme Customizer */}
+          <ThemeCustomizer />
+
           {/* Account Information */}
           <Card>
             <CardHeader>
