@@ -84,6 +84,11 @@ export default function TypingGame() {
     incorrectChars: 0,
     totalChars: 0
   });
+  const [cumulativeStats, setCumulativeStats] = useState({
+    totalCorrectChars: 0,
+    totalIncorrectChars: 0,
+    totalChars: 0
+  });
   const [startTime, setStartTime] = useState<number | null>(null);
   const [savingScore, setSavingScore] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -97,25 +102,29 @@ export default function TypingGame() {
     setCurrentText(SAMPLE_TEXTS[randomIndex]);
   }, []);
 
-  // Calculate stats
-  const calculateStats = useCallback((input: string, elapsed: number) => {
-    const correctChars = input.split('').filter((char, index) => 
+  // Calculate stats using cumulative data
+  const calculateStats = useCallback((input: string, elapsed: number, cumulative: any) => {
+    const currentCorrectChars = input.split('').filter((char, index) => 
       char === currentText[index]
     ).length;
     
-    const incorrectChars = input.length - correctChars;
-    const totalChars = input.length;
-    const accuracy = totalChars > 0 ? (correctChars / totalChars) * 100 : 100;
+    const currentIncorrectChars = input.length - currentCorrectChars;
+    
+    const totalCorrectChars = cumulative.totalCorrectChars + currentCorrectChars;
+    const totalIncorrectChars = cumulative.totalIncorrectChars + currentIncorrectChars;
+    const totalChars = totalCorrectChars + totalIncorrectChars;
+    
+    const accuracy = totalChars > 0 ? (totalCorrectChars / totalChars) * 100 : 100;
     
     // WPM calculation (assuming average word length of 5 characters)
     const minutes = elapsed / 60;
-    const wpm = minutes > 0 ? Math.round((correctChars / 5) / minutes) : 0;
+    const wpm = minutes > 0 ? Math.round((totalCorrectChars / 5) / minutes) : 0;
     
     return {
       wpm,
       accuracy: Math.round(accuracy),
-      correctChars,
-      incorrectChars,
+      correctChars: totalCorrectChars,
+      incorrectChars: totalIncorrectChars,
       totalChars
     };
   }, [currentText]);
@@ -136,12 +145,24 @@ export default function TypingGame() {
       
       if (startTime) {
         const elapsed = (Date.now() - startTime) / 1000;
-        const newStats = calculateStats(value, elapsed);
+        const newStats = calculateStats(value, elapsed, cumulativeStats);
         setStats(newStats);
       }
       
       // Auto-progress to new text when current text is completed
       if (value.length === currentText.length && gameState === 'playing') {
+        // Update cumulative stats
+        const currentCorrectChars = value.split('').filter((char, index) => 
+          char === currentText[index]
+        ).length;
+        const currentIncorrectChars = value.length - currentCorrectChars;
+        
+        setCumulativeStats(prev => ({
+          totalCorrectChars: prev.totalCorrectChars + currentCorrectChars,
+          totalIncorrectChars: prev.totalIncorrectChars + currentIncorrectChars,
+          totalChars: prev.totalChars + value.length
+        }));
+        
         setTimeout(() => {
           generateText();
           setUserInput('');
@@ -237,6 +258,11 @@ export default function TypingGame() {
       accuracy: 100,
       correctChars: 0,
       incorrectChars: 0,
+      totalChars: 0
+    });
+    setCumulativeStats({
+      totalCorrectChars: 0,
+      totalIncorrectChars: 0,
       totalChars: 0
     });
     generateText();
