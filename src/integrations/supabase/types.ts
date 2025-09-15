@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      duel_progress: {
+        Row: {
+          accuracy: number
+          duel_id: string
+          finished: boolean
+          id: string
+          progress: number
+          updated_at: string
+          user_id: string
+          wpm: number
+        }
+        Insert: {
+          accuracy?: number
+          duel_id: string
+          finished?: boolean
+          id?: string
+          progress?: number
+          updated_at?: string
+          user_id: string
+          wpm?: number
+        }
+        Update: {
+          accuracy?: number
+          duel_id?: string
+          finished?: boolean
+          id?: string
+          progress?: number
+          updated_at?: string
+          user_id?: string
+          wpm?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duel_progress_duel_id_fkey"
+            columns: ["duel_id"]
+            isOneToOne: false
+            referencedRelation: "duels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      duels: {
+        Row: {
+          created_at: string
+          finished_at: string | null
+          id: string
+          player1_id: string
+          player2_id: string
+          started_at: string | null
+          status: string
+          winner_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          player1_id: string
+          player2_id: string
+          started_at?: string | null
+          status?: string
+          winner_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          player1_id?: string
+          player2_id?: string
+          started_at?: string | null
+          status?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
+      friends: {
+        Row: {
+          created_at: string
+          friend_id: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          friend_id: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          friend_id?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
