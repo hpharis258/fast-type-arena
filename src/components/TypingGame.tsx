@@ -6,7 +6,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut, Settings, BarChart3 } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3, Users } from 'lucide-react';
 
 interface GameStats {
   wpm: number;
@@ -366,12 +366,25 @@ export default function TypingGame() {
       <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">TypeRacingGame</h1>
+            <h1 
+              className="text-2xl font-bold cursor-pointer hover:text-primary transition-colors"
+              onClick={() => navigate('/')}
+            >
+              TypeRacingGame
+            </h1>
             
-            <Button onClick={() => navigate('/leaderboard')} variant="ghost">
-              <Trophy className="w-4 h-4 mr-2" />
-              Leaderboard
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate('/leaderboard')} variant="ghost">
+                <Trophy className="w-4 h-4 mr-2" />
+                Leaderboard
+              </Button>
+              {user && (
+                <Button onClick={() => navigate('/friends')} variant="ghost">
+                  <Users className="w-4 h-4 mr-2" />
+                  Friends
+                </Button>
+              )}
+            </div>
             
             <div className="flex gap-2">
               {user ? (
@@ -441,7 +454,15 @@ export default function TypingGame() {
               value={userInput}
               onChange={handleInputChange}
               disabled={gameState !== 'waiting' && gameState !== 'playing'}
-              className="absolute opacity-0 -z-10 w-full h-full"
+              className="absolute inset-0 opacity-0 pointer-events-none caret-transparent"
+              style={{ 
+                caretColor: 'transparent',
+                position: 'fixed',
+                top: '-9999px',
+                left: '-9999px',
+                width: '1px',
+                height: '1px'
+              }}
               autoComplete="off"
               spellCheck={false}
               autoFocus

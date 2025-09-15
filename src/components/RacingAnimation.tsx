@@ -1,0 +1,124 @@
+import React from 'react';
+
+interface RacingAnimationProps {
+  player1Progress: number; // 0-100
+  player2Progress: number; // 0-100
+  player1Name: string;
+  player2Name: string;
+}
+
+export default function RacingAnimation({ 
+  player1Progress, 
+  player2Progress, 
+  player1Name, 
+  player2Name 
+}: RacingAnimationProps) {
+  return (
+    <div className="w-full bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6 mb-6">
+      <div className="relative h-32 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden">
+        {/* Track lines */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/2 w-full h-0.5 bg-yellow-400 transform -translate-y-0.5 opacity-60"></div>
+          <div className="absolute top-1/4 w-full h-px bg-white opacity-30"></div>
+          <div className="absolute top-3/4 w-full h-px bg-white opacity-30"></div>
+          
+          {/* Dashed center line */}
+          <div className="absolute top-1/2 w-full h-0.5 transform -translate-y-0.5">
+            <div className="flex w-full h-full">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-white' : 'bg-transparent'} opacity-40`}></div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Player 1 Car (Top lane) */}
+        <div className="absolute top-2 left-2 h-12 flex items-center">
+          <div 
+            className="transition-all duration-300 ease-out"
+            style={{ transform: `translateX(${player1Progress * 3}px)` }}
+          >
+            <div className="relative">
+              {/* Car body */}
+              <div className="w-12 h-6 bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-lg relative">
+                {/* Car details */}
+                <div className="absolute top-1 left-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
+                <div className="absolute top-1 right-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
+                <div className="absolute bottom-1 left-1 w-2 h-1 bg-red-800 rounded"></div>
+                <div className="absolute bottom-1 right-1 w-2 h-1 bg-red-800 rounded"></div>
+              </div>
+              {/* Speed effect */}
+              {player1Progress > 0 && (
+                <div className="absolute top-2 -left-6 flex space-x-1">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="w-3 h-0.5 bg-blue-400 opacity-60 animate-pulse"></div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="ml-4 text-sm font-medium text-red-400">{player1Name}</div>
+        </div>
+
+        {/* Player 2 Car (Bottom lane) */}
+        <div className="absolute bottom-2 left-2 h-12 flex items-center">
+          <div 
+            className="transition-all duration-300 ease-out"
+            style={{ transform: `translateX(${player2Progress * 3}px)` }}
+          >
+            <div className="relative">
+              {/* Car body */}
+              <div className="w-12 h-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg relative">
+                {/* Car details */}
+                <div className="absolute top-1 left-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
+                <div className="absolute top-1 right-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
+                <div className="absolute bottom-1 left-1 w-2 h-1 bg-blue-800 rounded"></div>
+                <div className="absolute bottom-1 right-1 w-2 h-1 bg-blue-800 rounded"></div>
+              </div>
+              {/* Speed effect */}
+              {player2Progress > 0 && (
+                <div className="absolute top-2 -left-6 flex space-x-1">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="w-3 h-0.5 bg-red-400 opacity-60 animate-pulse"></div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="ml-4 text-sm font-medium text-blue-400">{player2Name}</div>
+        </div>
+
+        {/* Finish line */}
+        <div className="absolute top-0 right-4 w-1 h-full bg-gradient-to-b from-white via-black to-white opacity-80">
+          <div className="w-full h-full" style={{
+            backgroundImage: 'repeating-linear-gradient(0deg, white 0px, white 4px, black 4px, black 8px)'
+          }}></div>
+        </div>
+      </div>
+
+      {/* Progress bars */}
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center gap-3">
+          <div className="w-4 h-4 bg-red-500 rounded"></div>
+          <div className="flex-1 bg-gray-700 rounded-full h-2">
+            <div 
+              className="bg-red-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${player1Progress}%` }}
+            ></div>
+          </div>
+          <span className="text-sm text-red-400 w-12">{Math.round(player1Progress)}%</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-4 h-4 bg-blue-500 rounded"></div>
+          <div className="flex-1 bg-gray-700 rounded-full h-2">
+            <div 
+              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${player2Progress}%` }}
+            ></div>
+          </div>
+          <span className="text-sm text-blue-400 w-12">{Math.round(player2Progress)}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
