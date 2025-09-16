@@ -11,14 +11,16 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTheme, predefinedThemes } from '@/hooks/useTheme';
 import ThemeCustomizer from '@/components/ThemeCustomizer';
-import { ArrowLeft, Lock, Trash2, AlertTriangle, Palette, Check } from 'lucide-react';
+import { ArrowLeft, Lock, Trash2, AlertTriangle, Palette, Check, User } from 'lucide-react';
 
 export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [displayNameLoading, setDisplayNameLoading] = useState(false);
   const { user, signOut } = useAuth();
   const { currentTheme, setTheme, customThemes, removeCustomTheme } = useTheme();
   const navigate = useNavigate();
@@ -27,8 +29,31 @@ export default function Settings() {
   React.useEffect(() => {
     if (!user) {
       navigate('/');
+    } else {
+      fetchUserProfile();
     }
   }, [user, navigate]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      setDisplayName(data?.display_name || '');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +134,43 @@ export default function Settings() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDisplayNameUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) return;
+
+    setDisplayNameLoading(true);
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ display_name: displayName.trim() || null })
+        .eq('user_id', user.id);
+
+      if (error) {
+        toast({
+          title: "Update failed",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Display name updated",
+        description: "Your display name has been successfully updated."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive"
+      });
+    } finally {
+      setDisplayNameLoading(false);
     }
   };
 
@@ -284,6 +346,37 @@ export default function Settings() {
 
           {/* Theme Customizer */}
           <ThemeCustomizer />
+
+          {/* Profile Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Profile Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleDisplayNameUpdate} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="display-name">Display Name</Label>
+                  <Input
+                    id="display-name"
+                    type="text"
+                    placeholder="Enter your display name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    maxLength={50}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    This name will appear on the leaderboard and in friend requests.
+                  </p>
+                </div>
+                <Button type="submit" disabled={displayNameLoading}>
+                  {displayNameLoading ? 'Updating...' : 'Update Display Name'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
           {/* Account Information */}
           <Card>
