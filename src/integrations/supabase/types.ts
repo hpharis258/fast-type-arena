@@ -141,6 +141,7 @@ export type Database = {
           accuracy: number
           correct_chars: number
           created_at: string
+          duration: number
           id: string
           incorrect_chars: number
           total_chars: number
@@ -151,6 +152,7 @@ export type Database = {
           accuracy: number
           correct_chars: number
           created_at?: string
+          duration?: number
           id?: string
           incorrect_chars: number
           total_chars: number
@@ -161,6 +163,7 @@ export type Database = {
           accuracy?: number
           correct_chars?: number
           created_at?: string
+          duration?: number
           id?: string
           incorrect_chars?: number
           total_chars?: number

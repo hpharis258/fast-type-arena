@@ -185,7 +185,8 @@ export default function TypingGame() {
           accuracy: gameStats.accuracy,
           correct_chars: gameStats.correctChars,
           incorrect_chars: gameStats.incorrectChars,
-          total_chars: gameStats.totalChars
+          total_chars: gameStats.totalChars,
+          duration: GAME_DURATION
         });
 
       if (error) {

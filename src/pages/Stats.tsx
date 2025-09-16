@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Target, Zap, BarChart3 } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Target, Zap, BarChart3, Clock } from 'lucide-react';
 import { StatsChart } from '@/components/StatsChart';
 
 interface UserScore {
@@ -12,6 +12,7 @@ interface UserScore {
   wpm: number;
   accuracy: number;
   created_at: string;
+  duration?: number;
 }
 
 interface UserStats {
@@ -21,6 +22,7 @@ interface UserStats {
   slowestWPM: number;
   averageAccuracy: number;
   bestAccuracy: number;
+  totalTimeSpent: number; // in seconds
 }
 
 export default function Stats() {
@@ -44,7 +46,7 @@ export default function Stats() {
     try {
       const { data, error } = await supabase
         .from('scores')
-        .select('id, wpm, accuracy, created_at')
+        .select('id, wpm, accuracy, created_at, duration')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
 
@@ -59,6 +61,7 @@ export default function Stats() {
       if (userScores.length > 0) {
         const wpmValues = userScores.map(s => s.wpm);
         const accuracyValues = userScores.map(s => s.accuracy);
+        const totalTimeSpent = userScores.reduce((sum, score) => sum + (score.duration || 30), 0);
 
         const calculatedStats: UserStats = {
           totalGames: userScores.length,
@@ -66,7 +69,8 @@ export default function Stats() {
           averageWPM: Math.round(wpmValues.reduce((a, b) => a + b, 0) / wpmValues.length),
           slowestWPM: Math.min(...wpmValues),
           averageAccuracy: Math.round(accuracyValues.reduce((a, b) => a + b, 0) / accuracyValues.length),
-          bestAccuracy: Math.max(...accuracyValues)
+          bestAccuracy: Math.max(...accuracyValues),
+          totalTimeSpent
         };
 
         setStats(calculatedStats);
@@ -128,7 +132,7 @@ export default function Stats() {
         ) : (
           <div className="space-y-6">
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Games Played</CardTitle>
@@ -186,6 +190,18 @@ export default function Stats() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-400">{stats.averageAccuracy}%</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Time Spent Typing</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-primary">
+                    {Math.floor(stats.totalTimeSpent / 60)}m {stats.totalTimeSpent % 60}s
+                  </div>
                 </CardContent>
               </Card>
             </div>
