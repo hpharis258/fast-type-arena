@@ -6,7 +6,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info } from 'lucide-react';
 import RacingAnimation from '@/components/RacingAnimation';
 
 interface GameStats {
@@ -440,6 +440,10 @@ export default function TypingGame() {
             </h1>
             
             <div className="flex gap-2">
+              <Button onClick={() => navigate('/about')} variant="ghost">
+                <Info className="w-4 h-4 mr-2" />
+                About
+              </Button>
               <Button onClick={() => navigate('/leaderboard')} variant="ghost">
                 <Trophy className="w-4 h-4 mr-2" />
                 Leaderboard
