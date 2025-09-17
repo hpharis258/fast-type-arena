@@ -6,7 +6,8 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut, Settings, BarChart3, Users } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User } from 'lucide-react';
+import RacingAnimation from '@/components/RacingAnimation';
 
 interface GameStats {
   wpm: number;
@@ -15,6 +16,15 @@ interface GameStats {
   incorrectChars: number;
   totalChars: number;
 }
+
+interface BestScore {
+  wpm: number;
+  accuracy: number;
+  correct_chars: number;
+  total_chars: number;
+}
+
+type GameMode = 'classic' | 'ghost';
 
 const GAME_DURATION = 30; // seconds
 
@@ -73,6 +83,7 @@ const SAMPLE_TEXTS = [
 ];
 
 export default function TypingGame() {
+  const [gameMode, setGameMode] = useState<GameMode>('classic');
   const [gameState, setGameState] = useState<'waiting' | 'playing' | 'finished'>('waiting');
   const [currentText, setCurrentText] = useState('');
   const [userInput, setUserInput] = useState('');
@@ -91,10 +102,39 @@ export default function TypingGame() {
   });
   const [startTime, setStartTime] = useState<number | null>(null);
   const [savingScore, setSavingScore] = useState(false);
+  const [bestScore, setBestScore] = useState<BestScore | null>(null);
+  const [ghostProgress, setGhostProgress] = useState(0);
+  const [userProgress, setUserProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Fetch user's best score for ghost racing
+  const fetchBestScore = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('scores')
+        .select('wpm, accuracy, correct_chars, total_chars')
+        .eq('user_id', user.id)
+        .order('wpm', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching best score:', error);
+        return;
+      }
+
+      if (data) {
+        setBestScore(data);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }, [user]);
 
   // Generate random text
   const generateText = useCallback(() => {
@@ -129,6 +169,20 @@ export default function TypingGame() {
     };
   }, [currentText]);
 
+  // Calculate progress for racing animation
+  const calculateProgress = useCallback((correctChars: number, elapsed: number) => {
+    // User progress based on current performance
+    const userProgressPercent = Math.min(100, (correctChars / (currentText.length || 1)) * 100);
+    setUserProgress(userProgressPercent);
+
+    // Ghost progress based on best score performance
+    if (gameMode === 'ghost' && bestScore && elapsed > 0) {
+      const ghostExpectedChars = (bestScore.correct_chars / GAME_DURATION) * elapsed;
+      const ghostProgressPercent = Math.min(100, (ghostExpectedChars / (currentText.length || 1)) * 100);
+      setGhostProgress(ghostProgressPercent);
+    }
+  }, [currentText.length, gameMode, bestScore]);
+
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -147,6 +201,12 @@ export default function TypingGame() {
         const elapsed = (Date.now() - startTime) / 1000;
         const newStats = calculateStats(value, elapsed, cumulativeStats);
         setStats(newStats);
+        
+        // Update progress for racing animation
+        const currentCorrectChars = value.split('').filter((char, index) => 
+          char === currentText[index]
+        ).length;
+        calculateProgress(cumulativeStats.totalCorrectChars + currentCorrectChars, elapsed);
       }
       
       // Auto-progress to new text when current text is completed
@@ -238,7 +298,10 @@ export default function TypingGame() {
   // Initialize game
   useEffect(() => {
     generateText();
-  }, [generateText]);
+    if (user) {
+      fetchBestScore();
+    }
+  }, [generateText, fetchBestScore, user]);
 
   // Focus input when game starts
   useEffect(() => {
@@ -254,6 +317,8 @@ export default function TypingGame() {
     setTimeLeft(GAME_DURATION);
     setStartTime(null);
     setSavingScore(false);
+    setUserProgress(0);
+    setGhostProgress(0);
     setStats({
       wpm: 0,
       accuracy: 100,
@@ -417,12 +482,60 @@ export default function TypingGame() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-4">
+        {/* Game Mode Selection */}
+        <div className="w-full max-w-4xl mb-6">
+          <div className="flex justify-center space-x-4">
+            <Button
+              onClick={() => setGameMode('classic')}
+              variant={gameMode === 'classic' ? 'default' : 'outline'}
+              className="flex items-center gap-2"
+            >
+              <Zap className="w-4 h-4" />
+              Classic Mode
+            </Button>
+            <Button
+              onClick={() => {
+                setGameMode('ghost');
+                if (user) fetchBestScore();
+              }}
+              variant={gameMode === 'ghost' ? 'default' : 'outline'}
+              className="flex items-center gap-2"
+              disabled={!user || !bestScore}
+            >
+              <User className="w-4 h-4" />
+              Ghost Racing
+              {!user && ' (Login Required)'}
+              {user && !bestScore && ' (Play Classic First)'}
+            </Button>
+          </div>
+          {gameMode === 'ghost' && bestScore && (
+            <p className="text-center text-sm text-muted-foreground mt-2">
+              Racing against your best: {bestScore.wpm} WPM ({bestScore.accuracy}% accuracy)
+            </p>
+          )}
+        </div>
+
         {/* Game Title and Status */}
         <div className="w-full max-w-4xl mb-8 text-center">
           <p className="text-muted-foreground mb-4">
-            {gameState === 'waiting' ? 'Start typing to begin the race!' : 'Type as fast and accurately as you can!'}
+            {gameState === 'waiting' 
+              ? (gameMode === 'ghost' ? 'Start typing to race your ghost!' : 'Start typing to begin the race!')
+              : (gameMode === 'ghost' ? 'Race against your best performance!' : 'Type as fast and accurately as you can!')
+            }
           </p>
         </div>
+
+        {/* Racing Animation for Ghost Mode */}
+        {gameMode === 'ghost' && gameState === 'playing' && (
+          <div className="w-full max-w-4xl mb-6">
+            <RacingAnimation
+              player1Progress={userProgress}
+              player2Progress={ghostProgress}
+              player1Name="You"
+              player2Name={`Ghost (${bestScore?.wpm} WPM)`}
+            />
+          </div>
+        )}
 
       {/* Stats Bar */}
       <div className="w-full max-w-4xl mb-6">
