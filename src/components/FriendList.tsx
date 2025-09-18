@@ -69,13 +69,16 @@ export default function FriendList({ onDuelRequest }: FriendListProps) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name')
+        .select('user_id, display_name')
         .ilike('display_name', `%${query}%`)
         .neq('user_id', user.id)
         .limit(10);
 
       if (error) throw error;
-      setSearchResults(data || []);
+      setSearchResults(data?.map(profile => ({
+        id: profile.user_id,
+        display_name: profile.display_name
+      })) || []);
     } catch (error) {
       console.error('Error searching users:', error);
     } finally {

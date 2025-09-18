@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthDialog } from '@/components/AuthDialog';
 import FriendList from '@/components/FriendList';
+import SuggestedFriends from '@/components/SuggestedFriends';
 import DuelRoom from '@/components/DuelRoom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -94,7 +95,14 @@ export default function Friends() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <FriendList onDuelRequest={handleDuelRequest} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <FriendList onDuelRequest={handleDuelRequest} />
+            </div>
+            <div>
+              <SuggestedFriends />
+            </div>
+          </div>
         </div>
       </div>
     </div>
