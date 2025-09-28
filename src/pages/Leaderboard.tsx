@@ -22,13 +22,26 @@ export default function Leaderboard() {
   const [scores, setScores] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
+  const [page, setPage] = useState(1); 
+  const [pageLength, setPageLength] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   useEffect(() => {
     fetchLeaderboard();
-  }, []);
+  }, [page, pageLength]);
 
   const fetchLeaderboard = async () => {
+    setLoading(true);
     try {
+      // get total
+      const { count } = await supabase
+        .from('scores')
+        .select('id', { count: 'exact', head: true });
+      setTotalCount(count || 0);
+
+      // Pagination logic
+      const from = (page - 1) * pageLength;
+      const to = from + pageLength - 1;
+
       const { data, error } = await supabase
         .from('scores')
         .select(`
@@ -45,7 +58,7 @@ export default function Leaderboard() {
           )
         `)
         .order('wpm', { ascending: false })
-        .limit(20);
+        .range(from, to);
 
       if (error) {
         console.error('Error fetching leaderboard:', error);
@@ -83,7 +96,7 @@ export default function Leaderboard() {
       </div>
     );
   }
-
+ const totalPages = Math.ceil(totalCount / pageLength); 
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-4xl mx-auto">
@@ -93,6 +106,27 @@ export default function Leaderboard() {
           <Button onClick={() => navigate('/')} variant="secondary">
             Back to Game
           </Button>
+        </div>
+        {/* Page Length Picker */}
+        <div className="flex justify-center mb-4">
+          <div className="flex items-center gap-2 bg-muted/40 px-3 py-2 rounded-lg shadow-sm">
+            <label className="font-medium text-muted-foreground" htmlFor="page-length-picker">
+              Page Length:
+            </label>
+            <select
+              id="page-length-picker"
+              className="border border-border bg-background rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary transition"
+              value={pageLength}
+              onChange={e => {
+                setPageLength(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[5, 10, 20, 30, 40, 50].map(len => (
+                <option key={len} value={len}>{len}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <Card>
@@ -110,18 +144,23 @@ export default function Leaderboard() {
             ) : (
               <div className="space-y-2">
                 {scores.map((score, index) => {
-                  const rank = index + 1;
+                  const rank = (page - 1) * pageLength + index + 1; // update rank calculation
                   const displayName = score.profiles?.display_name || 'Anonymous';
-                  
+
+                  // Only show trophies for top 3 on the first page
+                  const showTrophy = page === 1 && rank <= 3;
+
                   return (
                     <div
                       key={score.id}
                       className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                        rank <= 3 ? 'bg-accent/20' : 'bg-muted/20 hover:bg-muted/40'
+                        showTrophy ? 'bg-accent/20' : 'bg-muted/20 hover:bg-muted/40'
                       }`}
                     >
                       <div className="flex items-center gap-4">
-                        {getRankIcon(rank)}
+                        {showTrophy ? getRankIcon(rank) : (
+                          <span className="w-6 h-6 flex items-center justify-center font-bold text-muted-foreground">{rank}</span>
+                        )}
                         <div>
                           <div className="font-semibold">{displayName}</div>
                           <div className="text-sm text-muted-foreground">
@@ -151,6 +190,31 @@ export default function Leaderboard() {
             )}
           </CardContent>
         </Card>
+           {/* Pagination Controls */}
+            <div className="flex justify-between items-center mt-6">
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Showing {(page - 1) * pageLength + 1}
+                {' - '}
+                {Math.min(page * pageLength, totalCount)} of {totalCount}
+              </span>
+              <Button
+                variant="outline"
+                disabled={page === totalPages || totalPages === 0}
+                onClick={() => setPage(page + 1)}
+              >
+                Next
+              </Button>
+            </div>
+
+        
+        
       </div>
     </div>
   );

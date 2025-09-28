@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -12,9 +12,48 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Friends() {
   const [currentDuel, setCurrentDuel] = useState<string | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [reloadFriends, setReloadFriends] = useState(0);
+  
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Fetch pending friend requests once on mount
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchRequests = async () => {
+      const { data, error } = await supabase
+        .from('friends')
+        .select('id, created_at, user_id, friend_id, status')
+        .eq('friend_id', user.id)
+        .eq('status', 'pending');
+      if (!error && data) {
+        console.log(data, error);
+        const userIds = data.map(r => r.user_id);
+        console.log('userIds', userIds);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .in('user_id', userIds);
+
+        console.log('profiles', profiles);
+        console.log('pending requests', data);
+      
+        
+        if (!profiles) return
+        // Merge display names into requests
+        const requestsWithNames = data.map(req => ({
+          ...req,
+          display_name: profiles?.find(p => p.user_id === req.user_id)?.display_name || "Unknown"
+        }));
+
+        setPendingRequests(requestsWithNames);
+      }
+    };
+    fetchRequests();
+  }, [user]);
 
   const handleDuelRequest = async (friendId: string) => {
     if (!user) return;
@@ -95,9 +134,65 @@ export default function Friends() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
+
+          {/* Pending Friend Requests UI Cards */}
+          {pendingRequests.length > 0 && (
+            <div className="mb-8">
+              <h2 className="font-bold mb-4 text-yellow-800">Pending Friend Requests</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {pendingRequests.map(req => (
+                  <div
+                    key={req.id}
+                    className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="font-semibold text-lg text-yellow-900">
+                        {req.display_name} <span className="text-xs text-muted-foreground"></span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mb-2">
+                        Requested: {new Date(req.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          await supabase
+                            .from('friends')
+                            .update({ status: 'accepted' })
+                            .eq('id', req.id);
+                          setPendingRequests(pendingRequests.filter(r => r.id !== req.id));
+                          setReloadFriends(r => r + 1); // <-- Add this line
+                          toast({ title: "Friend request accepted!" });
+                        }}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          await supabase
+                            .from('friends')
+                            .update({ status: 'rejected' })
+                            .eq('id', req.id);
+                          setPendingRequests(pendingRequests.filter(r => r.id !== req.id));
+                          setReloadFriends(r => r + 1); // <-- Add this line
+                          toast({ title: "Friend request rejected." });
+                        }}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
-              <FriendList onDuelRequest={handleDuelRequest} />
+              <FriendList onDuelRequest={handleDuelRequest} reload={reloadFriends} />
             </div>
             <div>
               <SuggestedFriends />
@@ -108,3 +203,12 @@ export default function Friends() {
     </div>
   );
 }
+
+type PendingRequest = {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  created_at: string;
+  status: string;
+  display_name: string;
+};

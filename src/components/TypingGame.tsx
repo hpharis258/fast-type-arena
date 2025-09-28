@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info } from 'lucide-react';
 import RacingAnimation from '@/components/RacingAnimation';
+import SAMPLE_TEXTS from '@/dataset/dataset';
 
 interface GameStats {
   wpm: number;
@@ -28,59 +29,7 @@ type GameMode = 'classic' | 'ghost';
 
 const GAME_DURATION = 30; // seconds
 
-const SAMPLE_TEXTS = [
-  "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet at least once.",
-  "Programming is not about what you know; it's about what you can figure out. The best way to learn is by doing.",
-  "In the digital age, typing speed has become an essential skill for productivity and communication in our daily lives.",
-  "Technology advances rapidly, changing how we work, communicate, and interact with the world around us every day.",
-  "Success is not final, failure is not fatal: it is the courage to continue that counts in the journey of life.",
-  "The art of programming is the art of organizing complexity, of mastering multitude and avoiding its bastard chaos.",
-  "Code never lies, comments sometimes do. Write code that tells a story and comments that add meaningful context.",
-  "Every expert was once a beginner. Every pro was once an amateur. Every icon was once an unknown.",
-  "Innovation distinguishes between a leader and a follower. Think different and create something amazing.",
-  "The only way to do great work is to love what you do. If you haven't found it yet, keep looking.",
-  "Simplicity is the ultimate sophistication. Make everything as simple as possible, but not simpler.",
-  "First, solve the problem. Then, write the code. Good programmers write code that humans can understand.",
-  "Programming today is a race between software engineers striving to build bigger and better programs.",
-  "The best error message is the one that never shows up. Design systems that prevent errors from occurring.",
-  "Learning to write programs stretches your mind, and helps you think better, creates a way of thinking.",
-  "Any fool can write code that a computer can understand. Good programmers write code that humans understand.",
-  "The most important property of a program is whether it accomplishes the intention of its user.",
-  "Programming is not a science. Programming is a craft. We are craftspeople building digital solutions.",
-  "Code is like humor. When you have to explain it, it's bad. Write self-documenting and clean code.",
-  "The function of good software is to make the complex appear to be simple. Hide complexity behind elegance.",
-  "Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code cleverly.",
-  "Walking on water and developing software from a specification are easy if both are frozen.",
-  "Software is a great combination between artistry and engineering. When you finally get done making it work.",
-  "The computer was born to solve problems that did not exist before. Now we create solutions for real needs.",
-  "Talk is cheap. Show me the code. Actions speak louder than words, especially in programming.",
-  "Programs must be written for people to read, and only incidentally for machines to execute.",
-  "The best way to get a project done faster is to start sooner. Time management is crucial in development.",
-  "Software and cathedrals are much the same. First we build them, then we pray they don't fall down.",
-  "Programming is the closest thing we have to magic. We create something from nothing using logic and creativity.",
-  "Good code is its own best documentation. As you're about to add a comment, ask yourself why.",
-  "The bearing of a child takes nine months, no matter how many women are assigned to the task.",
-  "There are only two hard things in computer science: cache invalidation and naming things.",
-  "Experience is the name everyone gives to their mistakes. Learn from failures and iterate quickly.",
-  "Perfection is achieved not when there is nothing more to add, but when there is nothing left to remove.",
-  "The cheapest, fastest, and most reliable components are those that aren't there. Simplicity wins.",
-  "If debugging is the process of removing software bugs, then programming must be the process of putting them in.",
-  "You can't have a million dollar dream with a minimum wage work ethic. Put in the effort required.",
-  "The best time to plant a tree was twenty years ago. The second best time is now. Start coding today.",
-  "Don't just learn to code, code to learn. Every project teaches you something new about programming.",
-  "The only impossible journey is the one you never begin. Start your programming adventure right now.",
-  "Code is poetry written in logic. Make your programs elegant, readable, and maintainable for others.",
-  "Programming is thinking, not typing. Spend more time designing and less time debugging later.",
-  "A good programmer is someone who always looks both ways before crossing a one-way street.",
-  "The most disastrous thing that you can ever learn is your first programming language. It shapes thinking.",
-  "Software is eating the world, but programmers are cooking it. Be part of the digital transformation.",
-  "The art of debugging is figuring out what you really told your program to do rather than what you thought.",
-  "Programming is learned by writing programs. Practice makes perfect in the world of software development.",
-  "The question of whether computers can think is like the question of whether submarines can swim.",
-  "In programming, the hard part isn't solving problems, but deciding what problems to solve first.",
-  "Code is like a joke. If you have to explain it, it probably needs to be rewritten for clarity.",
-  "The best programmers are not necessarily the fastest typists, but the clearest thinkers and problem solvers."
-];
+
 
 export default function TypingGame() {
   const [gameMode, setGameMode] = useState<GameMode>('classic');
