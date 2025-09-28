@@ -14,7 +14,7 @@ export default function Friends() {
   const [currentDuel, setCurrentDuel] = useState<string | null>(null);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [reloadFriends, setReloadFriends] = useState(0);
-  
+
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -30,16 +30,16 @@ export default function Friends() {
         .eq('friend_id', user.id)
         .eq('status', 'pending');
       if (!error && data) {
-        console.log(data, error);
+        //console.log(data, error);
         const userIds = data.map(r => r.user_id);
-        console.log('userIds', userIds);
+        //console.log('userIds', userIds);
         const { data: profiles } = await supabase
           .from('profiles')
           .select('user_id, display_name')
           .in('user_id', userIds);
 
-        console.log('profiles', profiles);
-        console.log('pending requests', data);
+        //console.log('profiles', profiles);
+        //console.log('pending requests', data);
       
         
         if (!profiles) return

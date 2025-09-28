@@ -52,7 +52,7 @@ export default function FriendList({ onDuelRequest }: FriendListProps) {
         `)
         .eq('user_id', user.id)
         .eq('status', 'accepted');
-        console.log(data, error);
+       //console.log(data, error);
       if (error) throw error;
       setFriends((data as any[]) || []);
     } catch (error) {
