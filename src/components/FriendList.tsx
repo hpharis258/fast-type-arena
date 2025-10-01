@@ -23,9 +23,10 @@ interface Friend {
 
 interface FriendListProps {
   onDuelRequest: (friendId: string) => void;
+  reload?: number;
 }
 
-export default function FriendList({ onDuelRequest }: FriendListProps) {
+export default function FriendList({ onDuelRequest, reload }: FriendListProps) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
@@ -38,7 +39,7 @@ export default function FriendList({ onDuelRequest }: FriendListProps) {
   useEffect(() => {
     if (!user) return;
     loadFriends();
-  }, [user]);
+  }, [user, reload]);
 
   const loadFriends = async () => {
     if (!user) return;
