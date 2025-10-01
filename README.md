@@ -1,7 +1,5 @@
 # TypeRacingGame
 
-[![TypeRacingGame.com](https://typeracinggame.com/og-image.png)](https://typeracinggame.com/)
-
 ## 🚗 What is TypeRacingGame?
 
 TypeRacingGame is a free online typing speed test and WPM challenge. It started as a vibe coded project in lovable and now it's being extended further. Race against the clock, compete with friends, and improve your typing skills with real-time stats, leaderboards, and ghost racing!
@@ -25,14 +23,3 @@ Play now: [https://typeracinggame.com/](https://typeracinggame.com/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
 - [Supabase](https://supabase.com/) (auth, database, realtime)
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone the repository
-
-```sh
-git clone https://github.com/hpharis258/fast-type-arena
-cd fast-type-arena
-```
