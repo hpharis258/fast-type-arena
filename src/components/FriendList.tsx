@@ -45,39 +45,51 @@ export default function FriendList({ onDuelRequest, reload }: FriendListProps) {
     if (!user) return;
     
     try {
-      // Query friendships where current user is user_id
-      const { data: friendsAsUser, error: error1 } = await supabase
-        .from('friends' as any)
-        .select(`
-          *,
-          friend:profiles!friends_friend_id_fkey(id, display_name)
-        `)
-        .eq('user_id', user.id)
+      // Get all friendships where user is involved
+      const { data: friendships, error: friendsError } = await supabase
+        .from('friends')
+        .select('*')
+        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
         .eq('status', 'accepted');
 
-      // Query friendships where current user is friend_id
-      const { data: friendsAsFriend, error: error2 } = await supabase
-        .from('friends' as any)
-        .select(`
-          *,
-          friend:profiles!friends_user_id_fkey(id, display_name)
-        `)
-        .eq('friend_id', user.id)
-        .eq('status', 'accepted');
+      if (friendsError) throw friendsError;
+      if (!friendships || friendships.length === 0) {
+        setFriends([]);
+        return;
+      }
 
-      if (error1 || error2) throw error1 || error2;
+      // Get unique friend IDs
+      const friendIds = friendships.map(f => 
+        f.user_id === user.id ? f.friend_id : f.user_id
+      );
 
-      // Combine both results, mapping friend data correctly
-      const allFriends = [
-        ...(friendsAsUser || []),
-        ...(friendsAsFriend || []).map((f: any) => ({
-          ...f,
-          friend_id: f.user_id, // Swap so friend_id always points to the friend
-          friend: f.friend
-        }))
-      ];
+      // Fetch profiles for all friends
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', friendIds);
 
-      setFriends(allFriends);
+      if (profilesError) throw profilesError;
+
+      // Map friendships to include profile data
+      const friendsWithProfiles: Friend[] = friendships.map(friendship => {
+        const friendId = friendship.user_id === user.id ? friendship.friend_id : friendship.user_id;
+        const profile = profiles?.find(p => p.user_id === friendId);
+        
+        return {
+          id: friendship.id,
+          user_id: friendship.user_id,
+          friend_id: friendId,
+          status: friendship.status as 'pending' | 'accepted',
+          created_at: friendship.created_at,
+          friend: {
+            id: friendId,
+            display_name: profile?.display_name || 'Anonymous'
+          }
+        };
+      });
+
+      setFriends(friendsWithProfiles);
     } catch (error) {
       console.error('Error loading friends:', error);
     } finally {
