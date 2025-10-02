@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Trophy } from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
 import RacingAnimation from './RacingAnimation';
 
 interface DuelStats {
@@ -28,7 +28,7 @@ const SAMPLE_TEXTS = [
 ];
 
 export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
-  const [gameState, setGameState] = useState<'waiting' | 'countdown' | 'playing' | 'finished'>('waiting');
+  const [gameState, setGameState] = useState<'waiting' | 'ready' | 'countdown' | 'playing' | 'finished'>('waiting');
   const [currentText, setCurrentText] = useState('');
   const [userInput, setUserInput] = useState('');
   const [countdown, setCountdown] = useState(3);
@@ -47,19 +47,78 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
   });
   const [opponentName, setOpponentName] = useState('');
   const [winner, setWinner] = useState<string | null>(null);
+  const [isOpponentOnline, setIsOpponentOnline] = useState(false);
+  const [bothReady, setBothReady] = useState(false);
+  const [myReady, setMyReady] = useState(false);
+  const [opponentReady, setOpponentReady] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Initialize game
+  // Initialize game and presence
   useEffect(() => {
     const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
     setCurrentText(randomText);
     
-    // Set up real-time subscription for duel updates
-    const channel = supabase
-      .channel('duel-updates')
+    loadOpponentInfo();
+
+    // Set up presence channel
+    const presenceChannel = supabase
+      .channel(`duel-presence-${duelId}`, {
+        config: {
+          presence: {
+            key: user?.id
+          }
+        }
+      })
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        const onlineUsers = Object.keys(state);
+        
+        // Check if both players are online
+        setIsOpponentOnline(onlineUsers.length >= 2);
+        
+        // Check ready status
+        const presences = Object.values(state).flat() as any[];
+        const myPresence = presences.find((p: any) => p.user_id === user?.id);
+        const opponentPresence = presences.find((p: any) => p.user_id !== user?.id);
+        
+        if (myPresence) setMyReady(myPresence.ready || false);
+        if (opponentPresence) setOpponentReady(opponentPresence.ready || false);
+        
+        // Start game if both ready
+        if (myPresence?.ready && opponentPresence?.ready && gameState === 'ready') {
+          setBothReady(true);
+          startCountdown();
+        }
+      })
+      .on('presence', { event: 'join' }, ({ key }) => {
+        console.log('Player joined:', key);
+      })
+      .on('presence', { event: 'leave' }, ({ key }) => {
+        console.log('Player left:', key);
+        if (gameState !== 'finished') {
+          toast({
+            title: "Opponent left",
+            description: "Your opponent has disconnected.",
+            variant: "destructive"
+          });
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({
+            user_id: user?.id,
+            ready: false,
+            online_at: new Date().toISOString()
+          });
+        }
+      });
+
+    // Set up real-time subscription for duel progress
+    const progressChannel = supabase
+      .channel('duel-progress')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -70,39 +129,56 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
       })
       .subscribe();
 
-    // Load opponent info
-    loadOpponentInfo();
-
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(presenceChannel);
+      supabase.removeChannel(progressChannel);
     };
   }, [duelId]);
 
   const loadOpponentInfo = async () => {
     try {
       const { data: duelData, error } = await supabase
-        .from('duels' as any)
-        .select(`
-          *,
-          player1:profiles!duels_player1_id_fkey(display_name),
-          player2:profiles!duels_player2_id_fkey(display_name)
-        `)
+        .from('duels')
+        .select('player1_id, player2_id')
         .eq('id', duelId)
         .single();
 
       if (error) throw error;
 
-      const opponent = (duelData as any).player1_id === user?.id ? (duelData as any).player2 : (duelData as any).player1;
-      setOpponentName(opponent?.display_name || 'Anonymous');
+      const opponentId = duelData.player1_id === user?.id ? duelData.player2_id : duelData.player1_id;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', opponentId)
+        .single();
+
+      setOpponentName(profile?.display_name || 'Anonymous');
     } catch (error) {
       console.error('Error loading opponent info:', error);
     }
   };
 
+  const handleReady = async () => {
+    const presenceChannel = supabase.channel(`duel-presence-${duelId}`);
+    await presenceChannel.track({
+      user_id: user?.id,
+      ready: true,
+      online_at: new Date().toISOString()
+    });
+    
+    setMyReady(true);
+    setGameState('ready');
+    
+    toast({
+      title: "You're ready!",
+      description: "Waiting for opponent..."
+    });
+  };
+
   const handleDuelUpdate = (payload: any) => {
     const progress = payload.new;
     if (progress.user_id !== user?.id) {
-      // Update opponent stats
       setOpponentStats({
         wpm: progress.wpm,
         accuracy: progress.accuracy,
@@ -135,7 +211,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
 
     try {
       await supabase
-        .from('duel_progress' as any)
+        .from('duel_progress')
         .upsert({
           duel_id: duelId,
           user_id: user.id,
@@ -154,7 +230,6 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
     
     if (gameState !== 'playing') return;
     
-    // Prevent typing beyond text length
     if (value.length <= currentText.length) {
       setUserInput(value);
       
@@ -164,16 +239,31 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
         setMyStats(stats);
         updateProgress(stats);
         
-        // Check if finished
         if (stats.finished && !opponentStats.finished) {
-          setWinner(user?.email || 'You');
+          setWinner('You');
           setGameState('finished');
+          updateDuelWinner();
         }
       }
     }
   };
 
-  const startGame = () => {
+  const updateDuelWinner = async () => {
+    try {
+      await supabase
+        .from('duels')
+        .update({ 
+          winner_id: user?.id,
+          finished_at: new Date().toISOString(),
+          status: 'finished'
+        })
+        .eq('id', duelId);
+    } catch (error) {
+      console.error('Error updating winner:', error);
+    }
+  };
+
+  const startCountdown = () => {
     setGameState('countdown');
     let count = 3;
     
@@ -214,7 +304,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
         <Card className="w-full max-w-2xl">
           <CardContent className="p-8 text-center">
             <h2 className="text-3xl font-bold mb-6">
-              {winner === (user?.email || 'You') ? '🏆 You Won!' : `${winner} Wins!`}
+              {winner === 'You' ? '🏆 You Won!' : `${winner} Wins!`}
             </h2>
             
             <div className="grid grid-cols-2 gap-8 mb-8">
@@ -242,7 +332,6 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -251,14 +340,15 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
               Back
             </Button>
             <h1 className="text-xl font-bold">Duel vs {opponentName}</h1>
-            <div className="w-20"></div>
+            <div className="flex items-center gap-2">
+              <Users className={`w-5 h-5 ${isOpponentOnline ? 'text-green-500' : 'text-gray-400'}`} />
+              <span className="text-sm">{isOpponentOnline ? 'Both Online' : 'Waiting...'}</span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-4">
-        {/* Racing Animation */}
         <div className="w-full max-w-4xl mb-6">
           <RacingAnimation
             player1Progress={myStats.progress}
@@ -268,14 +358,40 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
           />
         </div>
 
-        {/* Game Status */}
         <div className="w-full max-w-4xl mb-6 text-center">
           {gameState === 'waiting' && (
             <div className="space-y-4">
-              <p className="text-muted-foreground">Ready to race?</p>
-              <Button onClick={startGame} className="btn-game">
-                Start Duel
-              </Button>
+              {!isOpponentOnline ? (
+                <div className="space-y-2">
+                  <p className="text-lg font-semibold">Waiting for opponent to join...</p>
+                  <p className="text-sm text-muted-foreground">Both players must be online to start</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-lg font-semibold text-green-600">Both players online!</p>
+                  <Button onClick={handleReady} className="btn-game" size="lg">
+                    I'm Ready!
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {gameState === 'ready' && (
+            <div className="space-y-4">
+              <div className="flex justify-center gap-8">
+                <div className={`text-center p-4 rounded-lg ${myReady ? 'bg-green-100 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                  <p className="font-semibold">You</p>
+                  <p className="text-sm">{myReady ? '✓ Ready' : 'Not Ready'}</p>
+                </div>
+                <div className={`text-center p-4 rounded-lg ${opponentReady ? 'bg-green-100 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                  <p className="font-semibold">{opponentName}</p>
+                  <p className="text-sm">{opponentReady ? '✓ Ready' : 'Not Ready'}</p>
+                </div>
+              </div>
+              {!bothReady && (
+                <p className="text-muted-foreground">Waiting for both players to be ready...</p>
+              )}
             </div>
           )}
           
@@ -299,7 +415,6 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
           )}
         </div>
 
-        {/* Game Area */}
         {gameState === 'playing' && (
           <Card className="w-full max-w-4xl bg-game-bg cursor-text" onClick={() => inputRef.current?.focus()}>
             <CardContent className="p-8 relative">

@@ -7,6 +7,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import FriendList from '@/components/FriendList';
 import SuggestedFriends from '@/components/SuggestedFriends';
 import DuelRoom from '@/components/DuelRoom';
+import PendingDuels from '@/components/PendingDuels';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -64,7 +65,7 @@ export default function Friends() {
         .insert({
           player1_id: user.id,
           player2_id: friendId,
-          status: 'active'
+          status: 'pending'
         })
         .select()
         .single();
@@ -72,19 +73,41 @@ export default function Friends() {
       if (error) throw error;
 
       toast({
-        title: "Duel started!",
-        description: "Get ready to race!"
+        title: "Duel invitation sent!",
+        description: "Waiting for your friend to accept..."
       });
 
-      setCurrentDuel((data as any).id);
+      // Subscribe to status changes for this duel
+      const channel = supabase
+        .channel(`duel-${(data as any).id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'duels',
+            filter: `id=eq.${(data as any).id}`
+          },
+          (payload) => {
+            if (payload.new.status === 'accepted') {
+              setCurrentDuel((data as any).id);
+              supabase.removeChannel(channel);
+            }
+          }
+        )
+        .subscribe();
     } catch (error) {
       console.error('Error creating duel:', error);
       toast({
         title: "Error",
-        description: "Failed to start duel. Please try again.",
+        description: "Failed to send duel invitation.",
         variant: "destructive"
       });
     }
+  };
+
+  const handleDuelAccepted = (duelId: string) => {
+    setCurrentDuel(duelId);
   };
 
   const handleExitDuel = () => {
@@ -134,6 +157,9 @@ export default function Friends() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
+          
+          {/* Pending Duel Invitations */}
+          <PendingDuels onDuelAccepted={handleDuelAccepted} />
 
           {/* Pending Friend Requests UI Cards */}
           {pendingRequests.length > 0 && (
