@@ -138,16 +138,16 @@ export default function Friends() {
           {/* Pending Friend Requests UI Cards */}
           {pendingRequests.length > 0 && (
             <div className="mb-8">
-              <h2 className="font-bold mb-4 text-yellow-800">Pending Friend Requests</h2>
+              <h2 className="font-bold mb-4 text-foreground">Pending Friend Requests</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {pendingRequests.map(req => (
                   <div
                     key={req.id}
-                    className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow flex flex-col justify-between"
+                    className="bg-accent/20 border border-accent rounded-lg p-4 shadow flex flex-col justify-between"
                   >
                     <div>
-                      <div className="font-semibold text-lg text-yellow-900">
-                        {req.display_name} <span className="text-xs text-muted-foreground"></span>
+                      <div className="font-semibold text-lg text-foreground">
+                        {req.display_name}
                       </div>
                       <div className="text-xs text-muted-foreground mb-2">
                         Requested: {new Date(req.created_at).toLocaleString()}
@@ -162,7 +162,7 @@ export default function Friends() {
                             .update({ status: 'accepted' })
                             .eq('id', req.id);
                           setPendingRequests(pendingRequests.filter(r => r.id !== req.id));
-                          setReloadFriends(r => r + 1); // <-- Add this line
+                          setReloadFriends(r => r + 1);
                           toast({ title: "Friend request accepted!" });
                         }}
                       >
@@ -177,7 +177,7 @@ export default function Friends() {
                             .update({ status: 'rejected' })
                             .eq('id', req.id);
                           setPendingRequests(pendingRequests.filter(r => r.id !== req.id));
-                          setReloadFriends(r => r + 1); // <-- Add this line
+                          setReloadFriends(r => r + 1);
                           toast({ title: "Friend request rejected." });
                         }}
                       >

@@ -45,7 +45,8 @@ export default function FriendList({ onDuelRequest, reload }: FriendListProps) {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
+      // Query friendships where current user is user_id
+      const { data: friendsAsUser, error: error1 } = await supabase
         .from('friends' as any)
         .select(`
           *,
@@ -53,9 +54,30 @@ export default function FriendList({ onDuelRequest, reload }: FriendListProps) {
         `)
         .eq('user_id', user.id)
         .eq('status', 'accepted');
-       //console.log(data, error);
-      if (error) throw error;
-      setFriends((data as any[]) || []);
+
+      // Query friendships where current user is friend_id
+      const { data: friendsAsFriend, error: error2 } = await supabase
+        .from('friends' as any)
+        .select(`
+          *,
+          friend:profiles!friends_user_id_fkey(id, display_name)
+        `)
+        .eq('friend_id', user.id)
+        .eq('status', 'accepted');
+
+      if (error1 || error2) throw error1 || error2;
+
+      // Combine both results, mapping friend data correctly
+      const allFriends = [
+        ...(friendsAsUser || []),
+        ...(friendsAsFriend || []).map((f: any) => ({
+          ...f,
+          friend_id: f.user_id, // Swap so friend_id always points to the friend
+          friend: f.friend
+        }))
+      ];
+
+      setFriends(allFriends);
     } catch (error) {
       console.error('Error loading friends:', error);
     } finally {
