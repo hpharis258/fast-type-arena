@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthDialog } from '@/components/AuthDialog';
 import FriendList from '@/components/FriendList';
@@ -19,6 +19,16 @@ export default function Friends() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
+
+  // Check URL params for duel ID
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const duelId = params.get('duel');
+    if (duelId) {
+      setCurrentDuel(duelId);
+    }
+  }, [location]);
 
   // Subscribe to duel status changes
   useEffect(() => {
