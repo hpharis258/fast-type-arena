@@ -73,29 +73,11 @@ export default function Friends() {
       if (error) throw error;
 
       toast({
-        title: "Duel invitation sent!",
+        title: "Challenge sent!",
         description: "Waiting for your friend to accept..."
       });
 
-      // Subscribe to status changes for this duel
-      const channel = supabase
-        .channel(`duel-${(data as any).id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'duels',
-            filter: `id=eq.${(data as any).id}`
-          },
-          (payload) => {
-            if (payload.new.status === 'accepted') {
-              setCurrentDuel((data as any).id);
-              supabase.removeChannel(channel);
-            }
-          }
-        )
-        .subscribe();
+      // Don't navigate until accepted
     } catch (error) {
       console.error('Error creating duel:', error);
       toast({

@@ -61,6 +61,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
     const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
     setCurrentText(randomText);
     
+    checkDuelStatus();
     loadOpponentInfo();
 
     // Set up presence channel
@@ -134,6 +135,29 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
       supabase.removeChannel(progressChannel);
     };
   }, [duelId]);
+
+  const checkDuelStatus = async () => {
+    try {
+      const { data: duelData, error } = await supabase
+        .from('duels')
+        .select('status')
+        .eq('id', duelId)
+        .single();
+
+      if (error) throw error;
+
+      if (duelData.status !== 'accepted') {
+        toast({
+          title: "Duel not ready",
+          description: "Waiting for opponent to accept...",
+          variant: "destructive"
+        });
+        onExit();
+      }
+    } catch (error) {
+      console.error('Error checking duel status:', error);
+    }
+  };
 
   const loadOpponentInfo = async () => {
     try {
