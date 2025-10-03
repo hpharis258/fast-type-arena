@@ -20,6 +20,37 @@ export default function Friends() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Subscribe to duel status changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('duel-status-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'duels',
+          filter: `player1_id=eq.${user.id}`
+        },
+        (payload) => {
+          if (payload.new.status === 'accepted') {
+            toast({
+              title: "Duel accepted!",
+              description: "Your opponent is ready to duel!"
+            });
+            setCurrentDuel(payload.new.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, toast]);
+
   // Fetch pending friend requests once on mount
   useEffect(() => {
     if (!user) return;
