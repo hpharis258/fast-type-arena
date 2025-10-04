@@ -247,6 +247,8 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
           accuracy: stats.accuracy,
           progress: stats.progress,
           finished: stats.finished
+        }, {
+          onConflict: 'duel_id,user_id'
         });
     } catch (error) {
       console.error('Error updating progress:', error);
