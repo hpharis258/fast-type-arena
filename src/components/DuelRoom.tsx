@@ -53,6 +53,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
   const [opponentReady, setOpponentReady] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
+  const presenceChannelRef = useRef<any>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -65,7 +66,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
     loadOpponentInfo();
 
     // Set up presence channel
-    const presenceChannel = supabase
+    presenceChannelRef.current = supabase
       .channel(`duel-presence-${duelId}`, {
         config: {
           presence: {
@@ -74,7 +75,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
         }
       })
       .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
+        const state = presenceChannelRef.current.presenceState();
         const onlineUsers = Object.keys(state);
         
         // Check if both players are online
@@ -89,7 +90,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
         if (opponentPresence) setOpponentReady(opponentPresence.ready || false);
         
         // Start game if both ready
-        if (myPresence?.ready && opponentPresence?.ready && gameState === 'ready') {
+        if (myPresence?.ready && opponentPresence?.ready) {
           setBothReady(true);
           startCountdown();
         }
@@ -109,7 +110,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          await presenceChannel.track({
+          await presenceChannelRef.current.track({
             user_id: user?.id,
             ready: false,
             online_at: new Date().toISOString()
@@ -131,7 +132,9 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(presenceChannel);
+      if (presenceChannelRef.current) {
+        supabase.removeChannel(presenceChannelRef.current);
+      }
       supabase.removeChannel(progressChannel);
     };
   }, [duelId]);
@@ -184,8 +187,9 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
   };
 
   const handleReady = async () => {
-    const presenceChannel = supabase.channel(`duel-presence-${duelId}`);
-    await presenceChannel.track({
+    if (!presenceChannelRef.current) return;
+    
+    await presenceChannelRef.current.track({
       user_id: user?.id,
       ready: true,
       online_at: new Date().toISOString()
