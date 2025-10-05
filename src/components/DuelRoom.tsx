@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, Users, Coins } from 'lucide-react';
 import RacingAnimation from './RacingAnimation';
+import { useWallet } from '@/hooks/useWallet';
 
 interface DuelStats {
   wpm: number;
@@ -56,6 +57,8 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
   const presenceChannelRef = useRef<any>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { wallet, spendCoins, addCoins } = useWallet();
+  const [coinWager, setCoinWager] = useState<number>(0);
 
   // Initialize game and presence
   useEffect(() => {
@@ -150,7 +153,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
     try {
       const { data: duelData, error } = await supabase
         .from('duels')
-        .select('status')
+        .select('status, coin_wager')
         .eq('id', duelId)
         .single();
 
@@ -164,6 +167,8 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
         });
         onExit();
       }
+      
+      setCoinWager(duelData.coin_wager || 0);
     } catch (error) {
       console.error('Error checking duel status:', error);
     }
@@ -295,6 +300,15 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
           status: 'finished'
         })
         .eq('id', duelId);
+      
+      // Award coins to winner if there was a wager
+      if (coinWager > 0) {
+        await addCoins(coinWager * 2); // Winner gets both wagers
+        toast({
+          title: "You won the duel! 🏆",
+          description: `+${coinWager * 2} Type Coins`
+        });
+      }
     } catch (error) {
       console.error('Error updating winner:', error);
     }
@@ -377,9 +391,17 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
               Back
             </Button>
             <h1 className="text-xl font-bold">Duel vs {opponentName}</h1>
-            <div className="flex items-center gap-2">
-              <Users className={`w-5 h-5 ${isOpponentOnline ? 'text-green-500' : 'text-gray-400'}`} />
-              <span className="text-sm">{isOpponentOnline ? 'Both Online' : 'Waiting...'}</span>
+            <div className="flex items-center gap-4">
+              {coinWager > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-lg">
+                  <Coins className="w-4 h-4 text-primary" />
+                  <span className="font-semibold">{coinWager} per player</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Users className={`w-5 h-5 ${isOpponentOnline ? 'text-green-500' : 'text-gray-400'}`} />
+                <span className="text-sm">{isOpponentOnline ? 'Both Online' : 'Waiting...'}</span>
+              </div>
             </div>
           </div>
         </div>

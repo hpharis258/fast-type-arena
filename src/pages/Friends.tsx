@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, History } from 'lucide-react';
+import { ArrowLeft, History, Coins } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthDialog } from '@/components/AuthDialog';
@@ -10,15 +10,29 @@ import DuelRoom from '@/components/DuelRoom';
 import PendingDuels from '@/components/PendingDuels';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useWallet } from '@/hooks/useWallet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Friends() {
   const [currentDuel, setCurrentDuel] = useState<string | null>(null);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [reloadFriends, setReloadFriends] = useState(0);
+  const [showWagerDialog, setShowWagerDialog] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { wallet, spendCoins } = useWallet();
   const location = useLocation();
 
   // Check URL params for duel ID
@@ -98,15 +112,45 @@ export default function Friends() {
   }, [user]);
 
   const handleDuelRequest = async (friendId: string) => {
-    if (!user) return;
+    setSelectedFriend(friendId);
+    setShowWagerDialog(true);
+  };
+  
+  const createDuel = async (withWager: boolean) => {
+    if (!user || !selectedFriend) return;
 
     try {
+      const coinWager = withWager ? 1 : 0;
+      
+      // Deduct coins if wagering
+      if (withWager) {
+        if (!wallet || wallet.coins < 1) {
+          toast({
+            title: "Not enough coins",
+            description: "You need at least 1 Type Coin to wager.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const success = await spendCoins(1);
+        if (!success) {
+          toast({
+            title: "Error",
+            description: "Failed to deduct coins.",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
       const { data, error } = await supabase
         .from('duels' as any)
         .insert({
           player1_id: user.id,
-          player2_id: friendId,
-          status: 'pending'
+          player2_id: selectedFriend,
+          status: 'pending',
+          coin_wager: coinWager
         })
         .select()
         .single();
@@ -115,10 +159,13 @@ export default function Friends() {
 
       toast({
         title: "Challenge sent!",
-        description: "Waiting for your friend to accept..."
+        description: withWager 
+          ? "1 Type Coin wagered. Winner takes all!"
+          : "Waiting for your friend to accept..."
       });
 
-      // Don't navigate until accepted
+      setShowWagerDialog(false);
+      setSelectedFriend(null);
     } catch (error) {
       console.error('Error creating duel:', error);
       toast({
@@ -171,7 +218,15 @@ export default function Friends() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Game
             </Button>
-            <h1 className="text-2xl font-bold">Friends & Duels</h1>
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold">Friends & Duels</h1>
+              {wallet && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg">
+                  <Coins className="w-4 h-4 text-primary" />
+                  <span className="font-semibold">{wallet.coins}</span>
+                </div>
+              )}
+            </div>
             <Button onClick={() => navigate('/duel-results')} variant="outline">
               <History className="w-4 h-4 mr-2" />
               Results
@@ -252,6 +307,34 @@ export default function Friends() {
           </div>
         </div>
       </div>
+      
+      {/* Wager Dialog */}
+      <AlertDialog open={showWagerDialog} onOpenChange={setShowWagerDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Challenge Options</AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose whether to make this a coin duel. Both players will wager 1 Type Coin, and the winner takes both!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowWagerDialog(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <Button variant="outline" onClick={() => createDuel(false)}>
+              Free Duel
+            </Button>
+            <AlertDialogAction 
+              onClick={() => createDuel(true)}
+              disabled={!wallet || wallet.coins < 1}
+              className="bg-primary"
+            >
+              <Coins className="w-4 h-4 mr-2" />
+              Wager 1 Coin
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

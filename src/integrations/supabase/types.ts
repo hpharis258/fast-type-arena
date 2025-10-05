@@ -57,6 +57,7 @@ export type Database = {
       }
       duels: {
         Row: {
+          coin_wager: number
           created_at: string
           finished_at: string | null
           id: string
@@ -67,6 +68,7 @@ export type Database = {
           winner_id: string | null
         }
         Insert: {
+          coin_wager?: number
           created_at?: string
           finished_at?: string | null
           id?: string
@@ -77,6 +79,7 @@ export type Database = {
           winner_id?: string | null
         }
         Update: {
+          coin_wager?: number
           created_at?: string
           finished_at?: string | null
           id?: string
@@ -179,6 +182,36 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_wallets: {
+        Row: {
+          coins: number
+          created_at: string
+          current_streak: number
+          id: string
+          last_play_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coins?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_play_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_play_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

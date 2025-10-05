@@ -6,8 +6,9 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins } from 'lucide-react';
 import RacingAnimation from '@/components/RacingAnimation';
+import { useWallet } from '@/hooks/useWallet';
 import SAMPLE_TEXTS from '@/dataset/dataset';
 
 interface GameStats {
@@ -58,6 +59,7 @@ export default function TypingGame() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { wallet, awardDailyCoins } = useWallet();
 
   // Fetch user's best score for ghost racing
   const fetchBestScore = useCallback(async () => {
@@ -237,12 +239,13 @@ export default function TypingGame() {
     return () => clearInterval(interval);
   }, [gameState]);
 
-  // Save score when game finishes
+  // Save score and award coins when game finishes
   useEffect(() => {
     if (gameState === 'finished' && user && stats.totalChars > 0) {
       saveScore(stats);
+      awardDailyCoins();
     }
-  }, [gameState, user, stats, saveScore]);
+  }, [gameState, user, stats, saveScore, awardDailyCoins]);
 
   // Initialize game
   useEffect(() => {
@@ -405,7 +408,13 @@ export default function TypingGame() {
               )}
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              {user && wallet && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg">
+                  <Coins className="w-4 h-4 text-primary" />
+                  <span className="font-semibold">{wallet.coins}</span>
+                </div>
+              )}
               {user ? (
                 <>
                   <Button onClick={() => navigate('/stats')} variant="ghost">

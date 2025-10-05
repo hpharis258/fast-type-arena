@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Swords, Check, X } from 'lucide-react';
+import { Swords, Check, X, Coins } from 'lucide-react';
+import { useWallet } from '@/hooks/useWallet';
 
 interface PendingDuel {
   id: string;
@@ -13,6 +14,7 @@ interface PendingDuel {
   status: string;
   created_at: string;
   challenger_name: string;
+  coin_wager: number;
 }
 
 interface PendingDuelsProps {
@@ -24,6 +26,7 @@ export default function PendingDuels({ onDuelAccepted }: PendingDuelsProps) {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { wallet, spendCoins } = useWallet();
 
   useEffect(() => {
     if (!user) return;
@@ -89,8 +92,30 @@ export default function PendingDuels({ onDuelAccepted }: PendingDuelsProps) {
     }
   };
 
-  const handleAccept = async (duelId: string) => {
+  const handleAccept = async (duelId: string, coinWager: number) => {
     try {
+      // Check if user has enough coins for wager
+      if (coinWager > 0) {
+        if (!wallet || wallet.coins < coinWager) {
+          toast({
+            title: "Not enough coins",
+            description: `You need ${coinWager} Type Coin(s) to accept this duel.`,
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const success = await spendCoins(coinWager);
+        if (!success) {
+          toast({
+            title: "Error",
+            description: "Failed to deduct coins.",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('duels')
         .update({ status: 'accepted' })
@@ -100,7 +125,9 @@ export default function PendingDuels({ onDuelAccepted }: PendingDuelsProps) {
 
       toast({
         title: "Duel accepted!",
-        description: "Get ready to race!"
+        description: coinWager > 0 
+          ? `${coinWager} Type Coin(s) wagered. Winner takes all!`
+          : "Get ready to race!"
       });
 
       onDuelAccepted(duelId);
@@ -159,12 +186,19 @@ export default function PendingDuels({ onDuelAccepted }: PendingDuelsProps) {
                 <p className="text-sm text-muted-foreground">
                   Challenged you to a typing duel
                 </p>
+                {duel.coin_wager > 0 && (
+                  <div className="flex items-center gap-1 mt-1 text-sm text-primary">
+                    <Coins className="w-3 h-3" />
+                    <span>{duel.coin_wager} Type Coin wager</span>
+                  </div>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  onClick={() => handleAccept(duel.id)}
+                  onClick={() => handleAccept(duel.id, duel.coin_wager)}
                   className="bg-green-600 hover:bg-green-700"
+                  disabled={duel.coin_wager > 0 && (!wallet || wallet.coins < duel.coin_wager)}
                 >
                   <Check className="w-4 h-4 mr-1" />
                   Accept
