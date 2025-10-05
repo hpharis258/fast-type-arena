@@ -100,13 +100,20 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
       })
       .on('presence', { event: 'leave' }, ({ key }) => {
         console.log('Player left:', key);
-        if (gameState !== 'finished') {
-          toast({
-            title: "Opponent left",
-            description: "Your opponent has disconnected.",
-            variant: "destructive"
-          });
-        }
+        // Check if we're now alone (opponent actually left, not just reconnecting)
+        setTimeout(() => {
+          const state = presenceChannelRef.current?.presenceState();
+          const onlineUsers = Object.keys(state || {});
+          
+          // Only show error if we're truly alone and game is in progress
+          if (onlineUsers.length < 2 && gameState === 'playing') {
+            toast({
+              title: "Opponent left",
+              description: "Your opponent has disconnected.",
+              variant: "destructive"
+            });
+          }
+        }, 1000); // Wait 1 second to see if they reconnect
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
