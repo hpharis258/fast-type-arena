@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, History } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthDialog } from '@/components/AuthDialog';
@@ -172,7 +172,10 @@ export default function Friends() {
               Back to Game
             </Button>
             <h1 className="text-2xl font-bold">Friends & Duels</h1>
-            <div className="w-24"></div>
+            <Button onClick={() => navigate('/duel-results')} variant="outline">
+              <History className="w-4 h-4 mr-2" />
+              Results
+            </Button>
           </div>
         </div>
       </header>
