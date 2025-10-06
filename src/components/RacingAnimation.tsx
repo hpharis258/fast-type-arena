@@ -5,14 +5,34 @@ interface RacingAnimationProps {
   player2Progress: number; // 0-100
   player1Name: string;
   player2Name: string;
+  player1Icon?: string;
+  player2Icon?: string;
 }
+
+const getIconColor = (iconId?: string): string => {
+  const iconColors: Record<string, string> = {
+    'default': '#3B82F6',
+    'red-rocket': '#EF4444',
+    'green-speedster': '#10B981',
+    'gold-champion': '#F59E0B',
+    'purple-phantom': '#8B5CF6',
+    'cyan-flash': '#06B6D4',
+    'pink-power': '#EC4899',
+    'silver-bullet': '#9CA3AF',
+  };
+  return iconColors[iconId || 'default'] || '#3B82F6';
+};
 
 export default function RacingAnimation({ 
   player1Progress, 
   player2Progress, 
   player1Name, 
-  player2Name 
+  player2Name,
+  player1Icon,
+  player2Icon 
 }: RacingAnimationProps) {
+  const player1Color = getIconColor(player1Icon);
+  const player2Color = getIconColor(player2Icon);
   return (
     <div className="w-full bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6 mb-6">
       <div className="relative h-32 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden">
@@ -40,12 +60,17 @@ export default function RacingAnimation({
           >
             <div className="relative">
               {/* Car body */}
-              <div className="w-12 h-6 bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-lg relative">
+              <div 
+                className="w-12 h-6 rounded-lg shadow-lg relative"
+                style={{ 
+                  background: `linear-gradient(to right, ${player1Color}, ${player1Color}dd)` 
+                }}
+              >
                 {/* Car details */}
                 <div className="absolute top-1 left-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
                 <div className="absolute top-1 right-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
-                <div className="absolute bottom-1 left-1 w-2 h-1 bg-red-800 rounded"></div>
-                <div className="absolute bottom-1 right-1 w-2 h-1 bg-red-800 rounded"></div>
+                <div className="absolute bottom-1 left-1 w-2 h-1 opacity-50 rounded" style={{ backgroundColor: player1Color }}></div>
+                <div className="absolute bottom-1 right-1 w-2 h-1 opacity-50 rounded" style={{ backgroundColor: player1Color }}></div>
               </div>
               {/* Speed effect */}
               {player1Progress > 0 && (
@@ -68,12 +93,17 @@ export default function RacingAnimation({
           >
             <div className="relative">
               {/* Car body */}
-              <div className="w-12 h-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg relative">
+              <div 
+                className="w-12 h-6 rounded-lg shadow-lg relative"
+                style={{ 
+                  background: `linear-gradient(to right, ${player2Color}, ${player2Color}dd)` 
+                }}
+              >
                 {/* Car details */}
                 <div className="absolute top-1 left-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
                 <div className="absolute top-1 right-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
-                <div className="absolute bottom-1 left-1 w-2 h-1 bg-blue-800 rounded"></div>
-                <div className="absolute bottom-1 right-1 w-2 h-1 bg-blue-800 rounded"></div>
+                <div className="absolute bottom-1 left-1 w-2 h-1 opacity-50 rounded" style={{ backgroundColor: player2Color }}></div>
+                <div className="absolute bottom-1 right-1 w-2 h-1 opacity-50 rounded" style={{ backgroundColor: player2Color }}></div>
               </div>
               {/* Speed effect */}
               {player2Progress > 0 && (
@@ -99,24 +129,24 @@ export default function RacingAnimation({
       {/* Progress bars */}
       <div className="mt-4 space-y-2">
         <div className="flex items-center gap-3">
-          <div className="w-4 h-4 bg-red-500 rounded"></div>
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: player1Color }}></div>
           <div className="flex-1 bg-gray-700 rounded-full h-2">
             <div 
-              className="bg-red-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${player1Progress}%` }}
+              className="h-2 rounded-full transition-all duration-300"
+              style={{ width: `${player1Progress}%`, backgroundColor: player1Color }}
             ></div>
           </div>
-          <span className="text-sm text-red-400 w-12">{Math.round(player1Progress)}%</span>
+          <span className="text-sm w-12" style={{ color: player1Color }}>{Math.round(player1Progress)}%</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-4 h-4 bg-blue-500 rounded"></div>
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: player2Color }}></div>
           <div className="flex-1 bg-gray-700 rounded-full h-2">
             <div 
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${player2Progress}%` }}
+              className="h-2 rounded-full transition-all duration-300"
+              style={{ width: `${player2Progress}%`, backgroundColor: player2Color }}
             ></div>
           </div>
-          <span className="text-sm text-blue-400 w-12">{Math.round(player2Progress)}%</span>
+          <span className="text-sm w-12" style={{ color: player2Color }}>{Math.round(player2Progress)}%</span>
         </div>
       </div>
     </div>

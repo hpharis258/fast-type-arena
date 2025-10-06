@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Target, Zap, BarChart3, Clock } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Target, Zap, BarChart3, Clock, Coins, Flame } from 'lucide-react';
 import { StatsChart } from '@/components/StatsChart';
+import { useWallet } from '@/hooks/useWallet';
 
 interface UserScore {
   id: string;
@@ -30,6 +31,7 @@ export default function Stats() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { wallet } = useWallet();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -131,6 +133,38 @@ export default function Stats() {
           </Card>
         ) : (
           <div className="space-y-6">
+            {/* Coins & Streak */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Type Coins</CardTitle>
+                  <Coins className="h-4 w-4 text-yellow-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-yellow-400">{wallet?.coins || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Earn coins daily and in duels
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Daily Streak</CardTitle>
+                  <Flame className="h-4 w-4 text-orange-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-orange-400">{wallet?.current_streak || 0} days</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {wallet?.current_streak >= 365 ? '5 coins/day' :
+                     wallet?.current_streak >= 180 ? '4 coins/day' :
+                     wallet?.current_streak >= 90 ? '3 coins/day' :
+                     wallet?.current_streak >= 30 ? '2 coins/day' : '1 coin/day'}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>

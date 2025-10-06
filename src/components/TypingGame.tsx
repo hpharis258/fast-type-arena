@@ -6,7 +6,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag } from 'lucide-react';
 import RacingAnimation from '@/components/RacingAnimation';
 import { useWallet } from '@/hooks/useWallet';
 import SAMPLE_TEXTS from '@/dataset/dataset';
@@ -55,6 +55,7 @@ export default function TypingGame() {
   const [bestScore, setBestScore] = useState<BestScore | null>(null);
   const [ghostProgress, setGhostProgress] = useState(0);
   const [userProgress, setUserProgress] = useState(0);
+  const [myIcon, setMyIcon] = useState<string>('default');
   const inputRef = useRef<HTMLInputElement>(null);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -82,6 +83,15 @@ export default function TypingGame() {
       if (data) {
         setBestScore(data);
       }
+      
+      // Also fetch user's icon
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('player_icon')
+        .eq('user_id', user.id)
+        .single();
+      
+      setMyIcon(profile?.player_icon || 'default');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -421,6 +431,10 @@ export default function TypingGame() {
                     <BarChart3 className="w-4 h-4 mr-2" />
                     Stats
                   </Button>
+                  <Button onClick={() => navigate('/shop')} variant="ghost">
+                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    Shop
+                  </Button>
                   <Button onClick={() => navigate('/settings')} variant="ghost">
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
@@ -495,6 +509,8 @@ export default function TypingGame() {
               player2Progress={ghostProgress}
               player1Name="You"
               player2Name={`Ghost (${bestScore?.wpm} WPM)`}
+              player1Icon={myIcon}
+              player2Icon={myIcon}
             />
           </div>
         )}

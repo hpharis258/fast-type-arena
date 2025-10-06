@@ -52,6 +52,8 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
   const [bothReady, setBothReady] = useState(false);
   const [myReady, setMyReady] = useState(false);
   const [opponentReady, setOpponentReady] = useState(false);
+  const [myIcon, setMyIcon] = useState<string>('default');
+  const [opponentIcon, setOpponentIcon] = useState<string>('default');
   
   const inputRef = useRef<HTMLInputElement>(null);
   const presenceChannelRef = useRef<any>(null);
@@ -186,13 +188,24 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
 
       const opponentId = duelData.player1_id === user?.id ? duelData.player2_id : duelData.player1_id;
       
-      const { data: profile } = await supabase
+      // Fetch opponent profile with icon
+      const { data: opponentProfile } = await supabase
         .from('profiles')
-        .select('display_name')
+        .select('display_name, player_icon')
         .eq('user_id', opponentId)
         .single();
 
-      setOpponentName(profile?.display_name || 'Anonymous');
+      setOpponentName(opponentProfile?.display_name || 'Anonymous');
+      setOpponentIcon(opponentProfile?.player_icon || 'default');
+      
+      // Fetch my profile icon
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('player_icon')
+        .eq('user_id', user?.id)
+        .single();
+      
+      setMyIcon(myProfile?.player_icon || 'default');
     } catch (error) {
       console.error('Error loading opponent info:', error);
     }
@@ -414,6 +427,8 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
             player2Progress={opponentStats.progress}
             player1Name="You"
             player2Name={opponentName}
+            player1Icon={myIcon}
+            player2Icon={opponentIcon}
           />
         </div>
 

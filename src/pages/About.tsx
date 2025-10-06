@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Zap, Target, Trophy, Users, BarChart3, User } from 'lucide-react';
+import { ArrowLeft, Zap, Target, Trophy, Users, BarChart3, User, Coins } from 'lucide-react';
 
 export default function About() {
   const navigate = useNavigate();
@@ -115,6 +115,19 @@ export default function About() {
               <p className="text-muted-foreground">
                 Practice with carefully curated texts that challenge different aspects 
                 of typing, from common words to programming-focused content.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <Coins className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+              <CardTitle>Type Coins & Rewards</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Earn Type Coins daily and build streaks for bonus rewards. Use coins 
+                to unlock custom racer icons and wager in duels against friends.
               </p>
             </CardContent>
           </Card>
