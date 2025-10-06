@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -420,10 +421,17 @@ export default function TypingGame() {
             
             <div className="flex gap-2 items-center">
               {user && wallet && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg">
-                  <Coins className="w-4 h-4 text-primary" />
-                  <span className="font-semibold">{wallet.coins}</span>
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg cursor-help">
+                      <Coins className="w-4 h-4 text-primary" />
+                      <span className="font-semibold">{wallet.coins}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Type Coins - Current streak: {wallet.current_streak} days</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
               {user ? (
                 <>
