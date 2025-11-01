@@ -1,4 +1,4 @@
-import { Trophy, Users, BarChart3, ShoppingBag, Lock } from 'lucide-react';
+import { Trophy, Users, BarChart3, ShoppingBag, Lock, Settings } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AuthDialog } from '@/components/AuthDialog';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,14 @@ const features: FeatureTeaser[] = [
     label: 'Shop',
     tooltip: 'Unlock Shop — Customize your racer with unique icons and themes!',
     path: '/shop'
+  },
+  {
+    icon: Settings,
+    label: 'Settings',
+    tooltip: 'Unlock Settings — Access advanced customization, themes and  preferences!',
+    path: '/settings'
   }
+
 ];
 
 export function LockedPreviewBar() {
