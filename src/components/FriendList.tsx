@@ -58,10 +58,13 @@ export default function FriendList({ onDuelRequest, reload }: FriendListProps) {
         return;
       }
 
-      // Get unique friend IDs
-      const friendIds = friendships.map(f => 
-        f.user_id === user.id ? f.friend_id : f.user_id
-      );
+      // Get unique friend IDs (deduplicate in case of duplicate rows)
+      const friendIdsSet = new Set<string>();
+      friendships.forEach(f => {
+        const friendId = f.user_id === user.id ? f.friend_id : f.user_id;
+        friendIdsSet.add(friendId);
+      });
+      const friendIds = Array.from(friendIdsSet);
 
       // Fetch profiles for all friends
       const { data: profiles, error: profilesError } = await supabase
@@ -71,17 +74,20 @@ export default function FriendList({ onDuelRequest, reload }: FriendListProps) {
 
       if (profilesError) throw profilesError;
 
-      // Map friendships to include profile data
-      const friendsWithProfiles: Friend[] = friendships.map(friendship => {
-        const friendId = friendship.user_id === user.id ? friendship.friend_id : friendship.user_id;
+      // Map unique friend IDs to profiles (deduplicated)
+      const friendsWithProfiles: Friend[] = friendIds.map(friendId => {
         const profile = profiles?.find(p => p.user_id === friendId);
+        const friendship = friendships.find(f => 
+          (f.user_id === user.id && f.friend_id === friendId) || 
+          (f.friend_id === user.id && f.user_id === friendId)
+        );
         
         return {
-          id: friendship.id,
-          user_id: friendship.user_id,
+          id: friendship?.id || friendId,
+          user_id: friendship?.user_id || user.id,
           friend_id: friendId,
-          status: friendship.status as 'pending' | 'accepted',
-          created_at: friendship.created_at,
+          status: 'accepted' as const,
+          created_at: friendship?.created_at || new Date().toISOString(),
           friend: {
             id: friendId,
             display_name: profile?.display_name || 'Anonymous'
