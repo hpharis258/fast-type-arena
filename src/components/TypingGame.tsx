@@ -11,6 +11,7 @@ import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, Sho
 import RacingAnimation from '@/components/RacingAnimation';
 import { useWallet } from '@/hooks/useWallet';
 import SAMPLE_TEXTS from '@/dataset/dataset';
+import { LockedPreviewBar } from '@/components/LockedPreviewBar';
 
 interface GameStats {
   wpm: number;
@@ -463,6 +464,9 @@ export default function TypingGame() {
           </div>
         </div>
       </header>
+
+      {/* Locked Preview Bar - Only shown to non-authenticated users */}
+      {!user && <LockedPreviewBar />}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-4">
