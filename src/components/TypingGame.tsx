@@ -394,8 +394,8 @@ export default function TypingGame() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4">
+          <div className="flex h-14 items-center justify-between"> {/* Modified this line */}
             <h1 
               className="text-2xl font-bold cursor-pointer hover:text-primary transition-colors"
               onClick={() => navigate('/')}
@@ -403,7 +403,7 @@ export default function TypingGame() {
               TypeRacingGame
             </h1>
             
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2"> {/* Added items-center */}
               <Button onClick={() => navigate('/about')} variant="ghost">
                 <Info className="w-4 h-4 mr-2" />
                 About
@@ -412,6 +412,9 @@ export default function TypingGame() {
                 <Trophy className="w-4 h-4 mr-2" />
                 Leaderboard
               </Button>
+              {!user && <LockedPreviewBar />}
+              
+
               {user && (
                 <Button onClick={() => navigate('/friends')} variant="ghost">
                   <Users className="w-4 h-4 mr-2" />
@@ -464,9 +467,6 @@ export default function TypingGame() {
           </div>
         </div>
       </header>
-
-      {/* Locked Preview Bar - Only shown to non-authenticated users */}
-      {!user && <LockedPreviewBar />}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-4">
