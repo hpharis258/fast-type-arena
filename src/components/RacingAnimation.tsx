@@ -63,7 +63,8 @@ export default function RacingAnimation({
               <div 
                 className="w-12 h-8 rounded-lg shadow-lg relative flex items-center justify-center text-2xl"
                 style={{ 
-                  background: `linear-gradient(to right, ${player1Color}, ${player1Color}dd)` 
+                  background: `linear-gradient(to right, ${player1Color}, ${player1Color}dd)`,
+                  transform: 'scaleX(-1)'
                 }}
               >
                 🏎️
@@ -92,7 +93,8 @@ export default function RacingAnimation({
               <div 
                 className="w-12 h-8 rounded-lg shadow-lg relative flex items-center justify-center text-2xl"
                 style={{ 
-                  background: `linear-gradient(to right, ${player2Color}, ${player2Color}dd)` 
+                  background: `linear-gradient(to right, ${player2Color}, ${player2Color}dd)`,
+                  transform: 'scaleX(-1)'
                 }}
               >
                 🏎️
