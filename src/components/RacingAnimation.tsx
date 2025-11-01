@@ -61,16 +61,12 @@ export default function RacingAnimation({
             <div className="relative">
               {/* Car body */}
               <div 
-                className="w-12 h-6 rounded-lg shadow-lg relative"
+                className="w-12 h-8 rounded-lg shadow-lg relative flex items-center justify-center text-2xl"
                 style={{ 
                   background: `linear-gradient(to right, ${player1Color}, ${player1Color}dd)` 
                 }}
               >
-                {/* Car details */}
-                <div className="absolute top-1 left-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
-                <div className="absolute top-1 right-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
-                <div className="absolute bottom-1 left-1 w-2 h-1 opacity-50 rounded" style={{ backgroundColor: player1Color }}></div>
-                <div className="absolute bottom-1 right-1 w-2 h-1 opacity-50 rounded" style={{ backgroundColor: player1Color }}></div>
+                🏎️
               </div>
               {/* Speed effect */}
               {player1Progress > 0 && (
@@ -94,16 +90,12 @@ export default function RacingAnimation({
             <div className="relative">
               {/* Car body */}
               <div 
-                className="w-12 h-6 rounded-lg shadow-lg relative"
+                className="w-12 h-8 rounded-lg shadow-lg relative flex items-center justify-center text-2xl"
                 style={{ 
                   background: `linear-gradient(to right, ${player2Color}, ${player2Color}dd)` 
                 }}
               >
-                {/* Car details */}
-                <div className="absolute top-1 left-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
-                <div className="absolute top-1 right-1 w-2 h-1 bg-yellow-300 rounded-full"></div>
-                <div className="absolute bottom-1 left-1 w-2 h-1 opacity-50 rounded" style={{ backgroundColor: player2Color }}></div>
-                <div className="absolute bottom-1 right-1 w-2 h-1 opacity-50 rounded" style={{ backgroundColor: player2Color }}></div>
+                🏎️
               </div>
               {/* Speed effect */}
               {player2Progress > 0 && (
