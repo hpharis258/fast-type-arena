@@ -20,7 +20,7 @@ const Support = () => {
 
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Support Fast Type Arena
+            Support typeracinggame.com
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Help us improve and maintain this typing game. Your support means the world!
@@ -135,7 +135,7 @@ const Support = () => {
               <div className="flex-1">
                 <h3 className="font-semibold mb-2">Share the Game</h3>
                 <p className="text-sm text-muted-foreground">
-                  Tell your friends about Fast Type Arena! Word of mouth is one of the best ways to support us.
+                  Tell your friends about typeracinggame.com! Word of mouth is one of the best ways to support us.
                 </p>
               </div>
             </div>
