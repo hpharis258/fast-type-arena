@@ -404,10 +404,12 @@ export default function TypingGame() {
             </h1>
             
             <div className="flex items-center gap-2"> {/* Added items-center */}
-              <Button onClick={() => navigate('/about')} variant="ghost">
-                <Info className="w-4 h-4 mr-2" />
-                About
-              </Button>
+              {!user && (
+                <Button onClick={() => navigate('/about')} variant="ghost">
+                  <Info className="w-4 h-4 mr-2" />
+                  About
+                </Button>
+              )}
               <Button onClick={() => navigate('/leaderboard')} variant="ghost">
                 <Trophy className="w-4 h-4 mr-2" />
                 Leaderboard
