@@ -13,6 +13,7 @@ import Friends from "./pages/Friends";
 import DuelResults from "./pages/DuelResults";
 import Shop from "./pages/Shop";
 import About from "./pages/About";
+import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 import DuelNotification from "@/components/DuelNotification";
 
@@ -37,6 +38,7 @@ function AppContent() {
         <Route path="/duel-results" element={<DuelResults />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/about" element={<About />} />
+        <Route path="/support" element={<Support />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

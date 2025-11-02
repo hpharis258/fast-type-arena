@@ -7,7 +7,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag, FileText, Upload } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag, FileText, Upload, Heart } from 'lucide-react';
 import RacingAnimation from '@/components/RacingAnimation';
 import { useWallet } from '@/hooks/useWallet';
 import SAMPLE_TEXTS from '@/dataset/dataset';
@@ -507,6 +507,10 @@ export default function TypingGame() {
                   About
                 </Button>
               )}
+              <Button onClick={() => navigate('/support')} variant="ghost">
+                <Heart className="w-4 h-4 mr-2" />
+                Support
+              </Button>
               <Button onClick={() => navigate('/leaderboard')} variant="ghost">
                 <Trophy className="w-4 h-4 mr-2" />
                 Leaderboard
