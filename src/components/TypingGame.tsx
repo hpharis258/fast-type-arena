@@ -7,11 +7,14 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag, FileText, Upload } from 'lucide-react';
 import RacingAnimation from '@/components/RacingAnimation';
 import { useWallet } from '@/hooks/useWallet';
 import SAMPLE_TEXTS from '@/dataset/dataset';
 import { LockedPreviewBar } from '@/components/LockedPreviewBar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface GameStats {
   wpm: number;
@@ -28,7 +31,7 @@ interface BestScore {
   total_chars: number;
 }
 
-type GameMode = 'classic' | 'ghost';
+type GameMode = 'classic' | 'ghost' | 'custom';
 
 const GAME_DURATION = 30; // seconds
 
@@ -40,6 +43,9 @@ export default function TypingGame() {
   const [currentText, setCurrentText] = useState('');
   const [userInput, setUserInput] = useState('');
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const [customText, setCustomText] = useState('');
+  const [customTextDialogOpen, setCustomTextDialogOpen] = useState(false);
+  const [customTextInput, setCustomTextInput] = useState('');
   const [stats, setStats] = useState<GameStats>({
     wpm: 0,
     accuracy: 100,
@@ -101,9 +107,100 @@ export default function TypingGame() {
 
   // Generate random text
   const generateText = useCallback(() => {
-    const randomIndex = Math.floor(Math.random() * SAMPLE_TEXTS.length);
-    setCurrentText(SAMPLE_TEXTS[randomIndex]);
-  }, []);
+    if (gameMode === 'custom' && customText) {
+      setCurrentText(customText);
+    } else {
+      const randomIndex = Math.floor(Math.random() * SAMPLE_TEXTS.length);
+      setCurrentText(SAMPLE_TEXTS[randomIndex]);
+    }
+  }, [gameMode, customText]);
+
+  // Handle custom text file upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type - only allow .txt files
+    const validExtensions = ['.txt'];
+    const fileName = file.name.toLowerCase();
+    const isValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+    
+    // Also check MIME type
+    const isValidMimeType = file.type === 'text/plain' || file.type === '';
+
+    if (!isValidExtension || !isValidMimeType) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a .txt file only.",
+        variant: "destructive"
+      });
+      e.target.value = ''; // Reset input
+      return;
+    }
+
+    // Check file size (max 100KB to prevent abuse)
+    if (file.size > 100 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a text file smaller than 100KB.",
+        variant: "destructive"
+      });
+      e.target.value = ''; // Reset input
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text && text.trim().length > 0) {
+        setCustomTextInput(text.trim());
+      } else {
+        toast({
+          title: "Empty file",
+          description: "The uploaded file is empty.",
+          variant: "destructive"
+        });
+      }
+    };
+    reader.onerror = () => {
+      toast({
+        title: "Error reading file",
+        description: "There was an error reading the file.",
+        variant: "destructive"
+      });
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
+  };
+
+  // Handle custom text submission
+  const handleCustomTextSubmit = () => {
+    if (!customTextInput.trim()) {
+      toast({
+        title: "No text provided",
+        description: "Please paste or upload some text.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (customTextInput.trim().length < 50) {
+      toast({
+        title: "Text too short",
+        description: "Please provide at least 50 characters.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setCustomText(customTextInput.trim());
+    setCurrentText(customTextInput.trim());
+    setCustomTextDialogOpen(false);
+    toast({
+      title: "Custom text loaded!",
+      description: "Start typing to begin the race with your custom text."
+    });
+  };
 
   // Calculate stats using cumulative data
   const calculateStats = useCallback((input: string, elapsed: number, cumulative: any) => {
@@ -497,20 +594,102 @@ export default function TypingGame() {
               {!user && ' (Login Required)'}
               {user && !bestScore && ' (Play Classic First)'}
             </Button>
+            <Button
+              onClick={() => {
+                setGameMode('custom');
+                setCustomTextDialogOpen(true);
+              }}
+              variant={gameMode === 'custom' ? 'default' : 'outline'}
+              className="flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              Custom Text
+            </Button>
           </div>
           {gameMode === 'ghost' && bestScore && (
             <p className="text-center text-sm text-muted-foreground mt-2">
               Racing against your best: {bestScore.wpm} WPM ({bestScore.accuracy}% accuracy)
             </p>
           )}
+          {gameMode === 'custom' && customText && (
+            <p className="text-center text-sm text-muted-foreground mt-2">
+              Using custom text ({customText.length} characters)
+            </p>
+          )}
         </div>
+
+        {/* Custom Text Dialog */}
+        <Dialog open={customTextDialogOpen} onOpenChange={setCustomTextDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add Custom Text</DialogTitle>
+              <DialogDescription>
+                Paste your text below or upload a .txt file to practice typing with custom content.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="custom-text">Paste Text (minimum 50 characters)</Label>
+                <Textarea
+                  id="custom-text"
+                  placeholder="Paste your custom text here..."
+                  value={customTextInput}
+                  onChange={(e) => setCustomTextInput(e.target.value)}
+                  className="min-h-[200px] mt-2"
+                />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 border-t" />
+                <span className="text-sm text-muted-foreground">OR</span>
+                <div className="flex-1 border-t" />
+              </div>
+              <div>
+                <Label htmlFor="file-upload">Upload Text File (.txt only)</Label>
+                <div className="mt-2">
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept=".txt,text/plain"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Choose Text File
+                  </Button>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setCustomTextDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCustomTextSubmit}>
+                  Use This Text
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Game Title and Status */}
         <div className="w-full max-w-4xl mb-8 text-center">
           <p className="text-muted-foreground mb-4">
             {gameState === 'waiting' 
-              ? (gameMode === 'ghost' ? 'Start typing to race your ghost!' : 'Start typing to begin the race!')
-              : (gameMode === 'ghost' ? 'Race against your best performance!' : 'Type as fast and accurately as you can!')
+              ? (gameMode === 'ghost' 
+                  ? 'Start typing to race your ghost!' 
+                  : gameMode === 'custom' 
+                    ? (customText ? 'Start typing your custom text!' : 'Click "Custom Text" to add your text first!')
+                    : 'Start typing to begin the race!')
+              : (gameMode === 'ghost' 
+                  ? 'Race against your best performance!' 
+                  : gameMode === 'custom'
+                    ? 'Type your custom text as fast as you can!'
+                    : 'Type as fast and accurately as you can!')
             }
           </p>
         </div>
