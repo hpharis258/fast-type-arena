@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Zap, Target, Trophy, Users, BarChart3, User, Coins } from 'lucide-react';
+import { ArrowLeft, Zap, Target, Trophy, Users, BarChart3, User, Coins, FileText, ShoppingBag, Swords, Flame } from 'lucide-react';
 
 export default function About() {
   const navigate = useNavigate();
@@ -108,13 +108,39 @@ export default function About() {
 
           <Card className="text-center">
             <CardHeader>
-              <Target className="w-8 h-8 mx-auto mb-2 text-red-400" />
-              <CardTitle>Smart Practice</CardTitle>
+              <FileText className="w-8 h-8 mx-auto mb-2 text-purple-400" />
+              <CardTitle>Custom Text Mode</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Practice with carefully curated texts that challenge different aspects 
-                of typing, from common words to programming-focused content.
+                Practice with your own content! Paste custom text or upload .txt files 
+                to type exactly what you need to practice.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <Swords className="w-8 h-8 mx-auto mb-2 text-red-400" />
+              <CardTitle>Typing Duels</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Challenge friends to real-time typing duels with coin wagers. Watch live 
+                racing animations as you compete head-to-head!
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <ShoppingBag className="w-8 h-8 mx-auto mb-2 text-pink-400" />
+              <CardTitle>Custom Shop</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Unlock unique racer icons and themes with Type Coins. Customize your 
+                racing avatar that appears in duels and ghost races.
               </p>
             </CardContent>
           </Card>
@@ -128,6 +154,19 @@ export default function About() {
               <p className="text-muted-foreground">
                 Earn Type Coins daily and build streaks for bonus rewards. Use coins 
                 to unlock custom racer icons and wager in duels against friends.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <Flame className="w-8 h-8 mx-auto mb-2 text-orange-400" />
+              <CardTitle>Daily Streaks</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Build your daily typing streak to earn bonus coins! The longer your 
+                streak, the more rewards you unlock each day.
               </p>
             </CardContent>
           </Card>
@@ -146,7 +185,7 @@ export default function About() {
                 </div>
                 <h3 className="font-semibold mb-2">Choose Your Mode</h3>
                 <p className="text-sm text-muted-foreground">
-                  Select between Classic mode for pure speed challenges or Ghost Racing to compete against your best runs.
+                  Select Classic mode, Ghost Racing to beat your personal best, or Custom Text to practice with your own content.
                 </p>
               </div>
               
@@ -164,9 +203,9 @@ export default function About() {
                 <div className="w-12 h-12 rounded-full bg-green-400/20 flex items-center justify-center mx-auto mb-4">
                   <span className="text-xl font-bold text-green-400">3</span>
                 </div>
-                <h3 className="font-semibold mb-2">Track Progress</h3>
+                <h3 className="font-semibold mb-2">Track & Compete</h3>
                 <p className="text-sm text-muted-foreground">
-                  View your results, compare with others, and watch your skills improve over time with detailed analytics.
+                  View results, challenge friends to duels, unlock shop items with coins, and track improvement with detailed analytics.
                 </p>
               </div>
             </div>
@@ -186,14 +225,16 @@ export default function About() {
                 who works with computers, improving your typing skills can significantly boost your efficiency.
               </p>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                TypeRacingGame makes practicing typing fun and engaging through gamification, social features, 
+                TypeRacingGame makes practicing typing fun and engaging through gamification, competitive features, 
                 and detailed progress tracking. Our platform is designed to help you:
               </p>
               <ul className="text-muted-foreground space-y-2 mb-4">
-                <li>• <strong>Improve Speed:</strong> Increase your words per minute (WPM) through regular practice</li>
-                <li>• <strong>Enhance Accuracy:</strong> Reduce errors and develop muscle memory for common key combinations</li>
-                <li>• <strong>Build Consistency:</strong> Maintain steady performance across different types of text</li>
-                <li>• <strong>Stay Motivated:</strong> Compete with friends and track your improvement over time</li>
+                <li>• <strong>Improve Speed:</strong> Increase your WPM through regular practice and ghost racing challenges</li>
+                <li>• <strong>Enhance Accuracy:</strong> Reduce errors and develop muscle memory with custom text practice</li>
+                <li>• <strong>Build Consistency:</strong> Maintain daily streaks to earn bonus coins and rewards</li>
+                <li>• <strong>Stay Motivated:</strong> Challenge friends to real-time duels with coin wagers and racing animations</li>
+                <li>• <strong>Customize Experience:</strong> Unlock unique racer icons and themes from the shop</li>
+                <li>• <strong>Practice Your Way:</strong> Use custom text mode to practice with your own content</li>
               </ul>
               <p className="text-muted-foreground leading-relaxed">
                 Join thousands of users who have already improved their typing skills with TypeRacingGame. 
