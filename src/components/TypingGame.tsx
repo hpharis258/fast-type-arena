@@ -337,12 +337,6 @@ export default function TypingGame() {
       interval = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            // Calculate final stats when timer runs out
-            if (startTime) {
-              const elapsed = (Date.now() - startTime) / 1000;
-              const finalStats = calculateStats(userInput, elapsed, cumulativeStats);
-              setStats(finalStats);
-            }
             setGameState('finished');
             return 0;
           }
@@ -352,15 +346,27 @@ export default function TypingGame() {
     }
     
     return () => clearInterval(interval);
-  }, [gameState, startTime, userInput, cumulativeStats, calculateStats]);
+  }, [gameState]);
 
-  // Save score and award coins when game finishes
+  // Calculate final stats and save score when game finishes
   useEffect(() => {
-    if (gameState === 'finished' && user && stats.totalChars > 0) {
-      saveScore(stats);
-      awardDailyCoins();
+    if (gameState === 'finished') {
+      // Calculate final stats if we have a start time
+      if (startTime) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const finalStats = calculateStats(userInput, elapsed, cumulativeStats);
+        setStats(finalStats);
+        
+        // Save score if user is logged in
+        if (user && finalStats.totalChars > 0) {
+          setTimeout(() => {
+            saveScore(finalStats);
+            awardDailyCoins();
+          }, 100);
+        }
+      }
     }
-  }, [gameState, user, stats, saveScore, awardDailyCoins]);
+  }, [gameState, startTime, userInput, cumulativeStats, calculateStats, user, saveScore, awardDailyCoins]);
 
   // Initialize game
   useEffect(() => {
