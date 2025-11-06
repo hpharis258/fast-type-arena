@@ -337,6 +337,12 @@ export default function TypingGame() {
       interval = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
+            // Calculate final stats when timer runs out
+            if (startTime) {
+              const elapsed = (Date.now() - startTime) / 1000;
+              const finalStats = calculateStats(userInput, elapsed, cumulativeStats);
+              setStats(finalStats);
+            }
             setGameState('finished');
             return 0;
           }
@@ -346,7 +352,7 @@ export default function TypingGame() {
     }
     
     return () => clearInterval(interval);
-  }, [gameState]);
+  }, [gameState, startTime, userInput, cumulativeStats, calculateStats]);
 
   // Save score and award coins when game finishes
   useEffect(() => {

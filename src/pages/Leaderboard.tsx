@@ -12,6 +12,7 @@ interface LeaderboardEntry {
   correct_chars: number;
   incorrect_chars: number;
   total_chars: number;
+  duration: number;
   created_at: string;
   profiles: {
     display_name: string | null;
@@ -51,6 +52,7 @@ export default function Leaderboard() {
           correct_chars,
           incorrect_chars,
           total_chars,
+          duration,
           created_at,
           user_id,
           profiles!scores_user_id_fkey (
@@ -169,7 +171,7 @@ export default function Leaderboard() {
                         </div>
                       </div>
                       
-                      <div className="flex gap-6 text-right">
+                      <div className="flex gap-4 text-right">
                         <div>
                           <div className="text-2xl font-bold text-primary">{score.wpm}</div>
                           <div className="text-xs text-muted-foreground">WPM</div>
@@ -181,6 +183,10 @@ export default function Leaderboard() {
                         <div>
                           <div className="text-lg font-semibold text-green-400">{score.correct_chars}</div>
                           <div className="text-xs text-muted-foreground">Correct</div>
+                        </div>
+                        <div>
+                          <div className="text-lg font-semibold text-blue-400">{score.duration}s</div>
+                          <div className="text-xs text-muted-foreground">Time</div>
                         </div>
                       </div>
                     </div>
