@@ -65,6 +65,13 @@ export default function TypingGame() {
   const [userProgress, setUserProgress] = useState(0);
   const [myIcon, setMyIcon] = useState<string>('default');
   const inputRef = useRef<HTMLInputElement>(null);
+  const statsRef = useRef<GameStats>({
+    wpm: 0,
+    accuracy: 100,
+    correctChars: 0,
+    incorrectChars: 0,
+    totalChars: 0
+  });
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -261,6 +268,7 @@ export default function TypingGame() {
         const elapsed = (Date.now() - startTime) / 1000;
         const newStats = calculateStats(value, elapsed, cumulativeStats);
         setStats(newStats);
+        statsRef.current = newStats;
         
         // Update progress for racing animation
         const currentCorrectChars = value.split('').filter((char, index) => 
@@ -348,25 +356,17 @@ export default function TypingGame() {
     return () => clearInterval(interval);
   }, [gameState]);
 
-  // Calculate final stats and save score when game finishes
+  // Save score and award coins when game finishes
   useEffect(() => {
-    if (gameState === 'finished') {
-      // Calculate final stats if we have a start time
-      if (startTime) {
-        const elapsed = (Date.now() - startTime) / 1000;
-        const finalStats = calculateStats(userInput, elapsed, cumulativeStats);
-        setStats(finalStats);
-        
-        // Save score if user is logged in
-        if (user && finalStats.totalChars > 0) {
-          setTimeout(() => {
-            saveScore(finalStats);
-            awardDailyCoins();
-          }, 100);
-        }
+    if (gameState === 'finished' && user) {
+      // Use the ref to get the latest stats
+      const currentStats = statsRef.current;
+      if (currentStats.totalChars > 0) {
+        saveScore(currentStats);
+        awardDailyCoins();
       }
     }
-  }, [gameState, startTime, userInput, cumulativeStats, calculateStats, user, saveScore, awardDailyCoins]);
+  }, [gameState, user, saveScore, awardDailyCoins]);
 
   // Initialize game
   useEffect(() => {
@@ -385,6 +385,13 @@ export default function TypingGame() {
 
   // Reset game
   const resetGame = () => {
+    const initialStats = {
+      wpm: 0,
+      accuracy: 100,
+      correctChars: 0,
+      incorrectChars: 0,
+      totalChars: 0
+    };
     setGameState('waiting');
     setUserInput('');
     setTimeLeft(timeMode);
@@ -392,13 +399,8 @@ export default function TypingGame() {
     setSavingScore(false);
     setUserProgress(0);
     setGhostProgress(0);
-    setStats({
-      wpm: 0,
-      accuracy: 100,
-      correctChars: 0,
-      incorrectChars: 0,
-      totalChars: 0
-    });
+    setStats(initialStats);
+    statsRef.current = initialStats;
     setCumulativeStats({
       totalCorrectChars: 0,
       totalIncorrectChars: 0,
@@ -410,6 +412,13 @@ export default function TypingGame() {
 
   // Handle time mode change
   const handleTimeModeChange = (newTimeMode: TimeMode) => {
+    const initialStats = {
+      wpm: 0,
+      accuracy: 100,
+      correctChars: 0,
+      incorrectChars: 0,
+      totalChars: 0
+    };
     setTimeMode(newTimeMode);
     setTimeLeft(newTimeMode);
     setGameState('waiting');
@@ -417,13 +426,8 @@ export default function TypingGame() {
     setStartTime(null);
     setUserProgress(0);
     setGhostProgress(0);
-    setStats({
-      wpm: 0,
-      accuracy: 100,
-      correctChars: 0,
-      incorrectChars: 0,
-      totalChars: 0
-    });
+    setStats(initialStats);
+    statsRef.current = initialStats;
     setCumulativeStats({
       totalCorrectChars: 0,
       totalIncorrectChars: 0,
