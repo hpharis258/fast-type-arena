@@ -7,7 +7,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag, FileText, Upload, Heart } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag, FileText, Upload, Heart, Clock } from 'lucide-react';
 import RacingAnimation from '@/components/RacingAnimation';
 import { useWallet } from '@/hooks/useWallet';
 import SAMPLE_TEXTS from '@/dataset/dataset';
@@ -32,17 +32,17 @@ interface BestScore {
 }
 
 type GameMode = 'classic' | 'ghost' | 'custom';
-
-const GAME_DURATION = 30; // seconds
+type TimeMode = 15 | 30 | 60;
 
 
 
 export default function TypingGame() {
   const [gameMode, setGameMode] = useState<GameMode>('classic');
+  const [timeMode, setTimeMode] = useState<TimeMode>(30);
   const [gameState, setGameState] = useState<'waiting' | 'playing' | 'finished'>('waiting');
   const [currentText, setCurrentText] = useState('');
   const [userInput, setUserInput] = useState('');
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const [timeLeft, setTimeLeft] = useState(30);
   const [customText, setCustomText] = useState('');
   const [customTextDialogOpen, setCustomTextDialogOpen] = useState(false);
   const [customTextInput, setCustomTextInput] = useState('');
@@ -237,11 +237,11 @@ export default function TypingGame() {
 
     // Ghost progress based on best score performance
     if (gameMode === 'ghost' && bestScore && elapsed > 0) {
-      const ghostExpectedChars = (bestScore.correct_chars / GAME_DURATION) * elapsed;
+      const ghostExpectedChars = (bestScore.correct_chars / timeMode) * elapsed;
       const ghostProgressPercent = Math.min(100, (ghostExpectedChars / (currentText.length || 1)) * 100);
       setGhostProgress(ghostProgressPercent);
     }
-  }, [currentText.length, gameMode, bestScore]);
+  }, [currentText.length, gameMode, bestScore, timeMode]);
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -306,7 +306,7 @@ export default function TypingGame() {
           correct_chars: gameStats.correctChars,
           incorrect_chars: gameStats.incorrectChars,
           total_chars: gameStats.totalChars,
-          duration: GAME_DURATION
+          duration: timeMode
         });
 
       if (error) {
@@ -375,7 +375,7 @@ export default function TypingGame() {
   const resetGame = () => {
     setGameState('waiting');
     setUserInput('');
-    setTimeLeft(GAME_DURATION);
+    setTimeLeft(timeMode);
     setStartTime(null);
     setSavingScore(false);
     setUserProgress(0);
@@ -393,6 +393,30 @@ export default function TypingGame() {
       totalChars: 0
     });
     generateText();
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  // Handle time mode change
+  const handleTimeModeChange = (newTimeMode: TimeMode) => {
+    setTimeMode(newTimeMode);
+    setTimeLeft(newTimeMode);
+    setGameState('waiting');
+    setUserInput('');
+    setStartTime(null);
+    setUserProgress(0);
+    setGhostProgress(0);
+    setStats({
+      wpm: 0,
+      accuracy: 100,
+      correctChars: 0,
+      incorrectChars: 0,
+      totalChars: 0
+    });
+    setCumulativeStats({
+      totalCorrectChars: 0,
+      totalIncorrectChars: 0,
+      totalChars: 0
+    });
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -575,7 +599,7 @@ export default function TypingGame() {
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         {/* Game Mode Selection */}
         <div className="w-full max-w-4xl mb-6">
-          <div className="flex justify-center space-x-4">
+          <div className="flex justify-center space-x-4 mb-4">
             <Button
               onClick={() => setGameMode('classic')}
               variant={gameMode === 'classic' ? 'default' : 'outline'}
@@ -610,6 +634,38 @@ export default function TypingGame() {
               Custom Text
             </Button>
           </div>
+          
+          {/* Time Mode Selection */}
+          <div className="flex justify-center space-x-3">
+            <Button
+              onClick={() => handleTimeModeChange(15)}
+              variant={timeMode === 15 ? 'default' : 'outline'}
+              size="sm"
+              className="flex items-center gap-1.5"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              15s
+            </Button>
+            <Button
+              onClick={() => handleTimeModeChange(30)}
+              variant={timeMode === 30 ? 'default' : 'outline'}
+              size="sm"
+              className="flex items-center gap-1.5"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              30s
+            </Button>
+            <Button
+              onClick={() => handleTimeModeChange(60)}
+              variant={timeMode === 60 ? 'default' : 'outline'}
+              size="sm"
+              className="flex items-center gap-1.5"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              60s
+            </Button>
+          </div>
+          
           {gameMode === 'ghost' && bestScore && (
             <p className="text-center text-sm text-muted-foreground mt-2">
               Racing against your best: {bestScore.wpm} WPM ({bestScore.accuracy}% accuracy)
