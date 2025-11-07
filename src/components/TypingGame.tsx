@@ -335,7 +335,7 @@ export default function TypingGame() {
     } finally {
       setSavingScore(false);
     }
-  }, [user, toast]);
+  }, [user, toast, timeMode]);
 
   // Game timer
   useEffect(() => {
