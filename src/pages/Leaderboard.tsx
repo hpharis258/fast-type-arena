@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,18 +29,27 @@ export default function Leaderboard() {
   const [pageLength, setPageLength] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'wpm' | 'accuracy' | 'created_at'>('wpm');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [filterDuration, setFilterDuration] = useState<'all' | '15' | '30' | '60'>('all');
   
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     fetchLeaderboard();
-  }, [page, pageLength, searchQuery, sortBy, sortOrder, filterDuration]);
+  }, [page, pageLength, debouncedSearchQuery, sortBy, sortOrder, filterDuration]);
 
   const fetchLeaderboard = async () => {
     setLoading(true);
     try {
-      // Build query with filters
       let query = supabase
         .from('scores')
         .select(`
@@ -53,7 +62,7 @@ export default function Leaderboard() {
           duration,
           created_at,
           user_id,
-          profiles!scores_user_id_fkey (
+          profiles!inner (
             display_name
           )
         `, { count: 'exact' });
@@ -63,33 +72,34 @@ export default function Leaderboard() {
         query = query.eq('duration', parseInt(filterDuration));
       }
 
-      // Apply search filter (search by display_name)
-      if (searchQuery.trim()) {
-        query = query.ilike('profiles.display_name', `%${searchQuery.trim()}%`);
+      // Apply search filter on display_name
+      if (debouncedSearchQuery.trim()) {
+        query = query.ilike('profiles.display_name', `%${debouncedSearchQuery.trim()}%`);
       }
 
       // Apply sorting
       query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
-      // Get total count before pagination
-      const { count } = await query;
-      setTotalCount(count || 0);
 
       // Apply pagination
       const from = (page - 1) * pageLength;
       const to = from + pageLength - 1;
       query = query.range(from, to);
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
 
       if (error) {
         console.error('Error fetching leaderboard:', error);
+        setScores([]);
+        setTotalCount(0);
         return;
       }
 
       setScores(data as LeaderboardEntry[] || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error:', error);
+      setScores([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
@@ -228,7 +238,9 @@ export default function Leaderboard() {
           <CardContent>
             {scores.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No scores yet. Be the first to play!</p>
+                <p className="text-muted-foreground">
+                  {debouncedSearchQuery.trim() ? 'No users found matching your search.' : 'No scores yet. Be the first to play!'}
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
