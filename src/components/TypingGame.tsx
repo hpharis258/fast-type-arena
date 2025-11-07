@@ -358,15 +358,38 @@ export default function TypingGame() {
 
   // Save score and award coins when game finishes
   useEffect(() => {
-    if (gameState === 'finished' && user) {
-      // Use the ref to get the latest stats
-      const currentStats = statsRef.current;
-      if (currentStats.totalChars > 0) {
-        saveScore(currentStats);
+    if (gameState === 'finished' && user && startTime) {
+      // Calculate final stats including current input and cumulative stats
+      const elapsed = (Date.now() - startTime) / 1000;
+      const currentCorrectChars = userInput.split('').filter((char, index) => 
+        char === currentText[index]
+      ).length;
+      const currentIncorrectChars = userInput.length - currentCorrectChars;
+      
+      const totalCorrectChars = cumulativeStats.totalCorrectChars + currentCorrectChars;
+      const totalIncorrectChars = cumulativeStats.totalIncorrectChars + currentIncorrectChars;
+      const totalChars = totalCorrectChars + totalIncorrectChars;
+      
+      const accuracy = totalChars > 0 ? (totalCorrectChars / totalChars) * 100 : 100;
+      const minutes = elapsed / 60;
+      const wpm = minutes > 0 ? Math.round((totalCorrectChars / 5) / minutes) : 0;
+      
+      const finalStats = {
+        wpm,
+        accuracy: Math.round(accuracy),
+        correctChars: totalCorrectChars,
+        incorrectChars: totalIncorrectChars,
+        totalChars
+      };
+      
+      setStats(finalStats);
+      
+      if (finalStats.totalChars > 0) {
+        saveScore(finalStats);
         awardDailyCoins();
       }
     }
-  }, [gameState, user, saveScore, awardDailyCoins]);
+  }, [gameState, user, startTime, userInput, currentText, cumulativeStats, saveScore, awardDailyCoins]);
 
   // Initialize game
   useEffect(() => {

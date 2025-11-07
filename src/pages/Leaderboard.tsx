@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Medal, Award } from 'lucide-react';
+import { Trophy, Medal, Award, Search, SlidersHorizontal } from 'lucide-react';
 
 interface LeaderboardEntry {
   id: string;
@@ -26,24 +28,20 @@ export default function Leaderboard() {
   const [page, setPage] = useState(1); 
   const [pageLength, setPageLength] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'wpm' | 'accuracy' | 'created_at'>('wpm');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [filterDuration, setFilterDuration] = useState<'all' | '15' | '30' | '60'>('all');
+  
   useEffect(() => {
     fetchLeaderboard();
-  }, [page, pageLength]);
+  }, [page, pageLength, searchQuery, sortBy, sortOrder, filterDuration]);
 
   const fetchLeaderboard = async () => {
     setLoading(true);
     try {
-      // get total
-      const { count } = await supabase
-        .from('scores')
-        .select('id', { count: 'exact', head: true });
-      setTotalCount(count || 0);
-
-      // Pagination logic
-      const from = (page - 1) * pageLength;
-      const to = from + pageLength - 1;
-
-      const { data, error } = await supabase
+      // Build query with filters
+      let query = supabase
         .from('scores')
         .select(`
           id,
@@ -58,9 +56,31 @@ export default function Leaderboard() {
           profiles!scores_user_id_fkey (
             display_name
           )
-        `)
-        .order('wpm', { ascending: false })
-        .range(from, to);
+        `, { count: 'exact' });
+
+      // Apply duration filter
+      if (filterDuration !== 'all') {
+        query = query.eq('duration', parseInt(filterDuration));
+      }
+
+      // Apply search filter (search by display_name)
+      if (searchQuery.trim()) {
+        query = query.ilike('profiles.display_name', `%${searchQuery.trim()}%`);
+      }
+
+      // Apply sorting
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Get total count before pagination
+      const { count } = await query;
+      setTotalCount(count || 0);
+
+      // Apply pagination
+      const from = (page - 1) * pageLength;
+      const to = from + pageLength - 1;
+      query = query.range(from, to);
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching leaderboard:', error);
@@ -109,6 +129,73 @@ export default function Leaderboard() {
             Back to Game
           </Button>
         </div>
+
+        {/* Filters and Search */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search username..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
+                  className="pl-9"
+                />
+              </div>
+
+              {/* Sort By */}
+              <Select value={sortBy} onValueChange={(value: any) => {
+                setSortBy(value);
+                setPage(1);
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="wpm">WPM</SelectItem>
+                  <SelectItem value="accuracy">Accuracy</SelectItem>
+                  <SelectItem value="created_at">Date</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Sort Order */}
+              <Select value={sortOrder} onValueChange={(value: any) => {
+                setSortOrder(value);
+                setPage(1);
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Order" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Highest First</SelectItem>
+                  <SelectItem value="asc">Lowest First</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Filter Duration */}
+              <Select value={filterDuration} onValueChange={(value: any) => {
+                setFilterDuration(value);
+                setPage(1);
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Time mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Times</SelectItem>
+                  <SelectItem value="15">15 seconds</SelectItem>
+                  <SelectItem value="30">30 seconds</SelectItem>
+                  <SelectItem value="60">60 seconds</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Page Length Picker */}
         <div className="flex justify-center mb-4">
           <div className="flex items-center gap-2 bg-muted/40 px-3 py-2 rounded-lg shadow-sm">
