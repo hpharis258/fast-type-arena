@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthDialog } from '@/components/AuthDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag, FileText, Upload, Heart, Clock } from 'lucide-react';
+import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag, FileText, Upload, Heart, Clock, Sparkles } from 'lucide-react';
 import RacingAnimation from '@/components/RacingAnimation';
 import { useWallet } from '@/hooks/useWallet';
 import SAMPLE_TEXTS from '@/dataset/dataset';
@@ -31,7 +32,7 @@ interface BestScore {
   total_chars: number;
 }
 
-type GameMode = 'classic' | 'ghost' | 'custom';
+type GameMode = 'classic' | 'ghost' | 'custom' | 'ai-generated';
 type TimeMode = 15 | 30 | 60;
 
 
@@ -46,6 +47,10 @@ export default function TypingGame() {
   const [customText, setCustomText] = useState('');
   const [customTextDialogOpen, setCustomTextDialogOpen] = useState(false);
   const [customTextInput, setCustomTextInput] = useState('');
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiTopicDialogOpen, setAiTopicDialogOpen] = useState(false);
+  const [aiTopicInput, setAiTopicInput] = useState('');
+  const [generatingAiText, setGeneratingAiText] = useState(false);
   const [stats, setStats] = useState<GameStats>({
     wpm: 0,
     accuracy: 100,
@@ -113,14 +118,43 @@ export default function TypingGame() {
   }, [user]);
 
   // Generate random text
-  const generateText = useCallback(() => {
+  const generateText = useCallback(async () => {
     if (gameMode === 'custom' && customText) {
       setCurrentText(customText);
+    } else if (gameMode === 'ai-generated' && aiTopic) {
+      setGeneratingAiText(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-typing-text', {
+          body: { topic: aiTopic }
+        });
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data?.text) {
+          setCurrentText(data.text);
+        } else {
+          throw new Error('No text generated');
+        }
+      } catch (error: any) {
+        console.error('Error generating AI text:', error);
+        toast({
+          title: "Failed to generate text",
+          description: error.message || "Please try again or choose a different mode.",
+          variant: "destructive"
+        });
+        // Fall back to random text
+        const randomIndex = Math.floor(Math.random() * SAMPLE_TEXTS.length);
+        setCurrentText(SAMPLE_TEXTS[randomIndex]);
+      } finally {
+        setGeneratingAiText(false);
+      }
     } else {
       const randomIndex = Math.floor(Math.random() * SAMPLE_TEXTS.length);
       setCurrentText(SAMPLE_TEXTS[randomIndex]);
     }
-  }, [gameMode, customText]);
+  }, [gameMode, customText, aiTopic, toast]);
 
   // Handle custom text file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,6 +241,51 @@ export default function TypingGame() {
       title: "Custom text loaded!",
       description: "Start typing to begin the race with your custom text."
     });
+  };
+
+  // Handle AI topic submission
+  const handleAiTopicSubmit = async () => {
+    if (!aiTopicInput.trim()) {
+      toast({
+        title: "No topic provided",
+        description: "Please enter a topic for AI text generation.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAiTopic(aiTopicInput.trim());
+    setAiTopicDialogOpen(false);
+    setGeneratingAiText(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-typing-text', {
+        body: { topic: aiTopicInput.trim() }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data?.text) {
+        setCurrentText(data.text);
+        toast({
+          title: "AI text generated!",
+          description: "Start typing to begin the race with AI-generated text."
+        });
+      } else {
+        throw new Error('No text generated');
+      }
+    } catch (error: any) {
+      console.error('Error generating AI text:', error);
+      toast({
+        title: "Failed to generate text",
+        description: error.message || "Please try again with a different topic.",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingAiText(false);
+    }
   };
 
   // Calculate stats using cumulative data
@@ -672,6 +751,17 @@ export default function TypingGame() {
               <FileText className="w-4 h-4" />
               Custom Text
             </Button>
+            <Button
+              onClick={() => {
+                setGameMode('ai-generated');
+                setAiTopicDialogOpen(true);
+              }}
+              variant={gameMode === 'ai-generated' ? 'default' : 'outline'}
+              className="flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Generated
+            </Button>
           </div>
           
           {/* Time Mode Selection */}
@@ -713,6 +803,11 @@ export default function TypingGame() {
           {gameMode === 'custom' && customText && (
             <p className="text-center text-sm text-muted-foreground mt-2">
               Using custom text ({customText.length} characters)
+            </p>
+          )}
+          {gameMode === 'ai-generated' && aiTopic && (
+            <p className="text-center text-sm text-muted-foreground mt-2">
+              Topic: {aiTopic}
             </p>
           )}
         </div>
@@ -775,6 +870,60 @@ export default function TypingGame() {
           </DialogContent>
         </Dialog>
 
+        {/* AI Topic Dialog */}
+        <Dialog open={aiTopicDialogOpen} onOpenChange={setAiTopicDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>AI-Generated Text</DialogTitle>
+              <DialogDescription>
+                Enter a topic or theme, and AI will generate typing practice text for you.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="ai-topic">Topic or Theme</Label>
+                <Input
+                  id="ai-topic"
+                  placeholder="e.g., space exploration, cooking, history..."
+                  value={aiTopicInput}
+                  onChange={(e) => setAiTopicInput(e.target.value)}
+                  className="mt-2"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !generatingAiText) {
+                      handleAiTopicSubmit();
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setAiTopicDialogOpen(false)}
+                  disabled={generatingAiText}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleAiTopicSubmit}
+                  disabled={generatingAiText}
+                >
+                  {generatingAiText ? (
+                    <>
+                      <Heart className="w-4 h-4 mr-2 animate-pulse" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Text
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Game Title and Status */}
         <div className="w-full max-w-4xl mb-8 text-center">
           <p className="text-muted-foreground mb-4">
@@ -783,12 +932,16 @@ export default function TypingGame() {
                   ? 'Start typing to race your ghost!' 
                   : gameMode === 'custom' 
                     ? (customText ? 'Start typing your custom text!' : 'Click "Custom Text" to add your text first!')
-                    : 'Start typing to begin the race!')
+                    : gameMode === 'ai-generated'
+                      ? (aiTopic ? 'Start typing the AI-generated text!' : 'Click "AI Generated" to choose a topic first!')
+                      : 'Start typing to begin the race!')
               : (gameMode === 'ghost' 
                   ? 'Race against your best performance!' 
                   : gameMode === 'custom'
                     ? 'Type your custom text as fast as you can!'
-                    : 'Type as fast and accurately as you can!')
+                    : gameMode === 'ai-generated'
+                      ? 'Type the AI-generated text as fast as you can!'
+                      : 'Type as fast and accurately as you can!')
             }
           </p>
         </div>
