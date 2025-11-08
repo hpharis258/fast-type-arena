@@ -43,6 +43,11 @@ export default function Leaderboard() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Reset page when search query changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, sortBy, sortOrder, filterDuration]);
+
   useEffect(() => {
     fetchLeaderboard();
   }, [page, pageLength, debouncedSearchQuery, sortBy, sortOrder, filterDuration]);
@@ -150,19 +155,13 @@ export default function Leaderboard() {
                 <Input
                   placeholder="Search username..."
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setPage(1);
-                  }}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
                 />
               </div>
 
               {/* Sort By */}
-              <Select value={sortBy} onValueChange={(value: any) => {
-                setSortBy(value);
-                setPage(1);
-              }}>
+              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
@@ -174,10 +173,7 @@ export default function Leaderboard() {
               </Select>
 
               {/* Sort Order */}
-              <Select value={sortOrder} onValueChange={(value: any) => {
-                setSortOrder(value);
-                setPage(1);
-              }}>
+              <Select value={sortOrder} onValueChange={(value: any) => setSortOrder(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Order" />
                 </SelectTrigger>
@@ -188,10 +184,7 @@ export default function Leaderboard() {
               </Select>
 
               {/* Filter Duration */}
-              <Select value={filterDuration} onValueChange={(value: any) => {
-                setFilterDuration(value);
-                setPage(1);
-              }}>
+              <Select value={filterDuration} onValueChange={(value: any) => setFilterDuration(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Time mode" />
                 </SelectTrigger>
