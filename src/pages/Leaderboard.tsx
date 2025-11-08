@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,8 @@ export default function Leaderboard() {
   const [sortBy, setSortBy] = useState<'wpm' | 'accuracy' | 'created_at'>('wpm');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [filterDuration, setFilterDuration] = useState<'all' | '15' | '30' | '60'>('all');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const isTyping = useRef(false);
   
   // Debounce search query
   useEffect(() => {
@@ -42,6 +44,13 @@ export default function Leaderboard() {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Maintain focus on search input during re-renders
+  useEffect(() => {
+    if (isTyping.current && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [scores, loading]);
 
   // Reset page when search query changes
   useEffect(() => {
@@ -153,9 +162,16 @@ export default function Leaderboard() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
+                  ref={searchInputRef}
                   placeholder="Search username..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    isTyping.current = true;
+                    setSearchQuery(e.target.value);
+                  }}
+                  onBlur={() => {
+                    isTyping.current = false;
+                  }}
                   className="pl-9"
                 />
               </div>
