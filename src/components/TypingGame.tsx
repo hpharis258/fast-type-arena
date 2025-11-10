@@ -753,14 +753,17 @@ export default function TypingGame() {
             </Button>
             <Button
               onClick={() => {
+                if (!user) return;
                 setGameMode('ai-generated');
                 setAiTopicDialogOpen(true);
               }}
               variant={gameMode === 'ai-generated' ? 'default' : 'outline'}
               className="flex items-center gap-2"
+              disabled={!user}
             >
               <Sparkles className="w-4 h-4" />
               AI Generated
+              {!user && ' (Login Required)'}
             </Button>
           </div>
           
