@@ -7,6 +7,14 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Coins, Check, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import defaultCar from '@/assets/cars/default.png';
+import redRocketCar from '@/assets/cars/red-rocket.png';
+import greenSpeedsterCar from '@/assets/cars/green-speedster.png';
+import goldChampionCar from '@/assets/cars/gold-champion.png';
+import purplePhantomCar from '@/assets/cars/purple-phantom.png';
+import cyanFlashCar from '@/assets/cars/cyan-flash.png';
+import pinkPowerCar from '@/assets/cars/pink-power.png';
+import silverBulletCar from '@/assets/cars/silver-bullet.png';
 
 interface PlayerIcon {
   id: string;
@@ -14,17 +22,18 @@ interface PlayerIcon {
   price: number;
   color: string;
   description: string;
+  image: string;
 }
 
 const availableIcons: PlayerIcon[] = [
-  { id: 'default', name: 'Classic Racer', price: 0, color: '#3B82F6', description: 'The original racing icon' },
-  { id: 'red-rocket', name: 'Red Rocket', price: 50, color: '#EF4444', description: 'Speed demon in red' },
-  { id: 'green-speedster', name: 'Green Speedster', price: 50, color: '#10B981', description: 'Eco-friendly speed' },
-  { id: 'gold-champion', name: 'Gold Champion', price: 100, color: '#F59E0B', description: 'For the true champions' },
-  { id: 'purple-phantom', name: 'Purple Phantom', price: 75, color: '#8B5CF6', description: 'Mysterious and fast' },
-  { id: 'cyan-flash', name: 'Cyan Flash', price: 75, color: '#06B6D4', description: 'Lightning quick' },
-  { id: 'pink-power', name: 'Pink Power', price: 60, color: '#EC4899', description: 'Bold and beautiful' },
-  { id: 'silver-bullet', name: 'Silver Bullet', price: 150, color: '#9CA3AF', description: 'Elite racer exclusive' },
+  { id: 'default', name: 'Classic Racer', price: 0, color: '#3B82F6', description: 'The original racing icon', image: defaultCar },
+  { id: 'red-rocket', name: 'Red Rocket', price: 50, color: '#EF4444', description: 'Speed demon in red', image: redRocketCar },
+  { id: 'green-speedster', name: 'Green Speedster', price: 50, color: '#10B981', description: 'Eco-friendly speed', image: greenSpeedsterCar },
+  { id: 'gold-champion', name: 'Gold Champion', price: 100, color: '#F59E0B', description: 'For the true champions', image: goldChampionCar },
+  { id: 'purple-phantom', name: 'Purple Phantom', price: 75, color: '#8B5CF6', description: 'Mysterious and fast', image: purplePhantomCar },
+  { id: 'cyan-flash', name: 'Cyan Flash', price: 75, color: '#06B6D4', description: 'Lightning quick', image: cyanFlashCar },
+  { id: 'pink-power', name: 'Pink Power', price: 60, color: '#EC4899', description: 'Bold and beautiful', image: pinkPowerCar },
+  { id: 'silver-bullet', name: 'Silver Bullet', price: 150, color: '#9CA3AF', description: 'Elite racer exclusive', image: silverBulletCar },
 ];
 
 export default function Shop() {
@@ -189,13 +198,12 @@ export default function Shop() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Icon Preview */}
-                  <div className="h-24 bg-gradient-to-br from-muted/30 to-muted/10 rounded-lg flex items-center justify-center">
-                    <div 
-                      className="w-16 h-12 rounded-lg shadow-lg flex items-center justify-center text-2xl"
-                      style={{ backgroundColor: icon.color }}
-                    >
-                      🏎️
-                    </div>
+                  <div className="h-32 bg-gradient-to-br from-muted/30 to-muted/10 rounded-lg flex items-center justify-center p-4">
+                    <img 
+                      src={icon.image} 
+                      alt={icon.name}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
 
                   {/* Price and Action */}

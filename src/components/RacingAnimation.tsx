@@ -1,4 +1,12 @@
 import React from 'react';
+import defaultCar from '@/assets/cars/default.png';
+import redRocketCar from '@/assets/cars/red-rocket.png';
+import greenSpeedsterCar from '@/assets/cars/green-speedster.png';
+import goldChampionCar from '@/assets/cars/gold-champion.png';
+import purplePhantomCar from '@/assets/cars/purple-phantom.png';
+import cyanFlashCar from '@/assets/cars/cyan-flash.png';
+import pinkPowerCar from '@/assets/cars/pink-power.png';
+import silverBulletCar from '@/assets/cars/silver-bullet.png';
 
 interface RacingAnimationProps {
   player1Progress: number; // 0-100
@@ -23,6 +31,20 @@ const getIconColor = (iconId?: string): string => {
   return iconColors[iconId || 'default'] || '#3B82F6';
 };
 
+const getIconImage = (iconId?: string): string => {
+  const iconImages: Record<string, string> = {
+    'default': defaultCar,
+    'red-rocket': redRocketCar,
+    'green-speedster': greenSpeedsterCar,
+    'gold-champion': goldChampionCar,
+    'purple-phantom': purplePhantomCar,
+    'cyan-flash': cyanFlashCar,
+    'pink-power': pinkPowerCar,
+    'silver-bullet': silverBulletCar,
+  };
+  return iconImages[iconId || 'default'] || defaultCar;
+};
+
 export default function RacingAnimation({ 
   player1Progress, 
   player2Progress, 
@@ -33,6 +55,8 @@ export default function RacingAnimation({
 }: RacingAnimationProps) {
   const player1Color = getIconColor(player1Icon);
   const player2Color = getIconColor(player2Icon);
+  const player1Image = getIconImage(player1Icon);
+  const player2Image = getIconImage(player2Icon);
   return (
     <div className="w-full bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6 mb-6">
       <div className="relative h-32 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden">
@@ -61,13 +85,16 @@ export default function RacingAnimation({
             <div className="relative">
               {/* Car body */}
               <div 
-                className="w-12 h-8 rounded-lg shadow-lg relative flex items-center justify-center text-2xl"
+                className="w-12 h-10 rounded-lg shadow-lg relative flex items-center justify-center"
                 style={{ 
-                  background: `linear-gradient(to right, ${player1Color}, ${player1Color}dd)`,
                   transform: 'scaleX(-1)'
                 }}
               >
-                🏎️
+                <img 
+                  src={player1Image} 
+                  alt={player1Name}
+                  className="w-full h-full object-contain"
+                />
               </div>
               {/* Speed effect */}
               {player1Progress > 0 && (
@@ -91,13 +118,16 @@ export default function RacingAnimation({
             <div className="relative">
               {/* Car body */}
               <div 
-                className="w-12 h-8 rounded-lg shadow-lg relative flex items-center justify-center text-2xl"
+                className="w-12 h-10 rounded-lg shadow-lg relative flex items-center justify-center"
                 style={{ 
-                  background: `linear-gradient(to right, ${player2Color}, ${player2Color}dd)`,
                   transform: 'scaleX(-1)'
                 }}
               >
-                🏎️
+                <img 
+                  src={player2Image} 
+                  alt={player2Name}
+                  className="w-full h-full object-contain"
+                />
               </div>
               {/* Speed effect */}
               {player2Progress > 0 && (
