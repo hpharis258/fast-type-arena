@@ -959,6 +959,8 @@ export default function TypingGame() {
               player2Name={`Ghost (${bestScore?.wpm} WPM)`}
               player1Icon={myIcon}
               player2Icon={myIcon}
+              player1UserId={user?.id}
+              player2UserId={user?.id}
             />
           </div>
         )}

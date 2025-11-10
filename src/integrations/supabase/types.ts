@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      car_colors: {
+        Row: {
+          created_at: string | null
+          hex_color: string
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          hex_color: string
+          id?: string
+          name: string
+          price?: number
+        }
+        Update: {
+          created_at?: string | null
+          hex_color?: string
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
+      car_upgrades: {
+        Row: {
+          created_at: string | null
+          description: string
+          effect_type: string
+          icon: string | null
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          effect_type: string
+          icon?: string | null
+          id?: string
+          name: string
+          price?: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          effect_type?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
       duel_progress: {
         Row: {
           accuracy: number
@@ -115,8 +169,68 @@ export type Database = {
         }
         Relationships: []
       }
+      owned_colors: {
+        Row: {
+          color_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          color_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          color_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owned_colors_color_id_fkey"
+            columns: ["color_id"]
+            isOneToOne: false
+            referencedRelation: "car_colors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owned_upgrades: {
+        Row: {
+          created_at: string | null
+          id: string
+          upgrade_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          upgrade_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          upgrade_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owned_upgrades_upgrade_id_fkey"
+            columns: ["upgrade_id"]
+            isOneToOne: false
+            referencedRelation: "car_upgrades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          car_color: string | null
+          car_upgrades: string[] | null
           created_at: string
           display_name: string | null
           id: string
@@ -126,6 +240,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          car_color?: string | null
+          car_upgrades?: string[] | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -135,6 +251,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          car_color?: string | null
+          car_upgrades?: string[] | null
           created_at?: string
           display_name?: string | null
           id?: string

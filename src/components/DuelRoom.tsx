@@ -54,6 +54,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
   const [opponentReady, setOpponentReady] = useState(false);
   const [myIcon, setMyIcon] = useState<string>('default');
   const [opponentIcon, setOpponentIcon] = useState<string>('default');
+  const [opponentId, setOpponentId] = useState<string | null>(null);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const presenceChannelRef = useRef<any>(null);
@@ -187,6 +188,7 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
       if (error) throw error;
 
       const opponentId = duelData.player1_id === user?.id ? duelData.player2_id : duelData.player1_id;
+      setOpponentId(opponentId);
       
       // Fetch opponent profile with icon
       const { data: opponentProfile } = await supabase
@@ -429,6 +431,8 @@ export default function DuelRoom({ duelId, onExit }: DuelRoomProps) {
             player2Name={opponentName}
             player1Icon={myIcon}
             player2Icon={opponentIcon}
+            player1UserId={user?.id}
+            player2UserId={opponentId || undefined}
           />
         </div>
 

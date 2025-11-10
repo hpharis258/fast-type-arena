@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Coins, Check, Lock } from 'lucide-react';
+import { ArrowLeft, Coins, Check, Lock, Palette } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CarCustomizer } from '@/components/CarCustomizer';
 import defaultCar from '@/assets/cars/default.png';
 import redRocketCar from '@/assets/cars/red-rocket.png';
 import greenSpeedsterCar from '@/assets/cars/green-speedster.png';
@@ -44,6 +45,8 @@ export default function Shop() {
   const [currentIcon, setCurrentIcon] = useState<string>('default');
   const [ownedIcons, setOwnedIcons] = useState<string[]>(['default']);
   const [loading, setLoading] = useState(true);
+  const [customizerOpen, setCustomizerOpen] = useState(false);
+  const [customizingIcon, setCustomizingIcon] = useState<PlayerIcon | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -142,6 +145,11 @@ export default function Shop() {
     });
   };
 
+  const openCustomizer = (icon: PlayerIcon) => {
+    setCustomizingIcon(icon);
+    setCustomizerOpen(true);
+  };
+
   if (!user || loading) {
     return null;
   }
@@ -207,41 +215,55 @@ export default function Shop() {
                   </div>
 
                   {/* Price and Action */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Coins className="w-4 h-4 text-primary" />
-                      <span className="font-bold">{icon.price}</span>
-                    </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <Coins className="w-4 h-4 text-primary" />
+                        <span className="font-bold">{icon.price}</span>
+                      </div>
 
-                    {isOwned ? (
-                      isEquipped ? (
-                        <Button disabled className="w-full ml-4">
-                          <Check className="w-4 h-4 mr-2" />
-                          Equipped
-                        </Button>
-                      ) : (
-                        <Button 
-                          onClick={() => equipIcon(icon.id)}
-                          variant="outline"
-                          className="w-full ml-4"
-                        >
-                          Equip
-                        </Button>
-                      )
-                    ) : (
-                      <Button
-                        onClick={() => purchaseIcon(icon)}
-                        disabled={!wallet || wallet.coins < icon.price}
-                        className="w-full ml-4"
-                      >
-                        {wallet && wallet.coins < icon.price ? (
-                          <>
-                            <Lock className="w-4 h-4 mr-2" />
-                            Not enough coins
-                          </>
+                      {isOwned ? (
+                        isEquipped ? (
+                          <Button disabled className="flex-1 ml-4">
+                            <Check className="w-4 h-4 mr-2" />
+                            Equipped
+                          </Button>
                         ) : (
-                          'Purchase'
-                        )}
+                          <Button 
+                            onClick={() => equipIcon(icon.id)}
+                            variant="outline"
+                            className="flex-1 ml-4"
+                          >
+                            Equip
+                          </Button>
+                        )
+                      ) : (
+                        <Button
+                          onClick={() => purchaseIcon(icon)}
+                          disabled={!wallet || wallet.coins < icon.price}
+                          className="flex-1 ml-4"
+                        >
+                          {wallet && wallet.coins < icon.price ? (
+                            <>
+                              <Lock className="w-4 h-4 mr-2" />
+                              Not enough coins
+                            </>
+                          ) : (
+                            'Purchase'
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {isOwned && (
+                      <Button
+                        onClick={() => openCustomizer(icon)}
+                        variant="secondary"
+                        className="w-full"
+                        size="sm"
+                      >
+                        <Palette className="w-3 h-3 mr-2" />
+                        Customize
                       </Button>
                     )}
                   </div>
@@ -260,6 +282,16 @@ export default function Shop() {
           </ul>
         </div>
       </div>
+
+      {customizingIcon && (
+        <CarCustomizer
+          open={customizerOpen}
+          onOpenChange={setCustomizerOpen}
+          carId={customizingIcon.id}
+          carName={customizingIcon.name}
+          carImage={customizingIcon.image}
+        />
+      )}
     </div>
   );
 }
