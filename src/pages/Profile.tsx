@@ -2,11 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Target, Zap, BarChart3, Clock, Coins, Flame, Share2 } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, TrendingUp, Target, Zap, BarChart3, Clock, Share2, Trophy, User } from 'lucide-react';
 import { StatsChart } from '@/components/StatsChart';
-import { useWallet } from '@/hooks/useWallet';
 import { useToast } from '@/hooks/use-toast';
 
 interface UserScore {
@@ -24,34 +22,60 @@ interface UserStats {
   slowestWPM: number;
   averageAccuracy: number;
   bestAccuracy: number;
-  totalTimeSpent: number; // in seconds
+  totalTimeSpent: number;
 }
 
-export default function Stats() {
+interface UserProfile {
+  display_name: string | null;
+  player_icon: string | null;
+}
+
+export default function Profile() {
   const [scores, setScores] = useState<UserScore[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const { wallet } = useWallet();
+  const { userId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       navigate('/');
       return;
     }
-    fetchUserStats();
-  }, [user, navigate]);
+    fetchUserProfile();
+  }, [userId, navigate]);
 
-  const fetchUserStats = async () => {
-    if (!user) return;
+  const fetchUserProfile = async () => {
+    if (!userId) return;
 
     try {
+      // Fetch profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('display_name, player_icon')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        toast({
+          title: "Profile not found",
+          description: "This user profile doesn't exist.",
+          variant: "destructive",
+        });
+        navigate('/');
+        return;
+      }
+
+      setProfile(profileData);
+
+      // Fetch scores
       const { data, error } = await supabase
         .from('scores')
         .select('id, wpm, accuracy, created_at, duration')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -94,26 +118,36 @@ export default function Stats() {
     }));
   };
 
-  const shareProfile = () => {
-    if (!user) return;
-    const profileUrl = `${window.location.origin}/profile/${user.id}`;
-    navigator.clipboard.writeText(profileUrl);
-    toast({
-      title: "Profile link copied!",
-      description: "Share this link to show off your typing stats",
-    });
+  const shareToTwitter = () => {
+    const text = `Check out my typing stats! 🎯\n${stats?.fastestWPM} WPM fastest | ${stats?.averageAccuracy}% avg accuracy | ${stats?.totalGames} games played`;
+    const url = window.location.href;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
   };
 
-  if (!user) {
-    return null;
-  }
+  const shareToFacebook = () => {
+    const url = window.location.href;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+  };
+
+  const shareToLinkedIn = () => {
+    const url = window.location.href;
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Link copied!",
+      description: "Profile link copied to clipboard",
+    });
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="text-2xl font-bold mb-2">Loading your stats...</div>
-          <div className="text-muted-foreground">Please wait while we analyze your progress</div>
+          <div className="text-2xl font-bold mb-2">Loading profile...</div>
+          <div className="text-muted-foreground">Please wait while we load the stats</div>
         </div>
       </div>
     );
@@ -126,14 +160,33 @@ export default function Stats() {
           <div className="flex items-center gap-4">
             <Button onClick={() => navigate('/')} variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Game
+              Back
             </Button>
-            <h1 className="text-4xl font-bold">Your Statistics</h1>
+            <div>
+              <h1 className="text-4xl font-bold flex items-center gap-3">
+                <User className="w-8 h-8" />
+                {profile?.display_name || 'Anonymous Typer'}
+              </h1>
+              <p className="text-muted-foreground mt-1">Public Typing Profile</p>
+            </div>
           </div>
-          <Button onClick={shareProfile} variant="default">
-            <Share2 className="w-4 h-4 mr-2" />
-            Share Profile
-          </Button>
+          
+          {/* Share Buttons */}
+          <div className="flex gap-2">
+            <Button onClick={shareToTwitter} size="sm" variant="outline">
+              <Share2 className="w-4 h-4 mr-2" />
+              Twitter
+            </Button>
+            <Button onClick={shareToFacebook} size="sm" variant="outline">
+              Facebook
+            </Button>
+            <Button onClick={shareToLinkedIn} size="sm" variant="outline">
+              LinkedIn
+            </Button>
+            <Button onClick={copyLink} size="sm" variant="default">
+              Copy Link
+            </Button>
+          </div>
         </div>
 
         {!stats ? (
@@ -141,44 +194,45 @@ export default function Stats() {
             <CardContent className="p-8 text-center">
               <BarChart3 className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <h2 className="text-2xl font-bold mb-2">No Games Played Yet</h2>
-              <p className="text-muted-foreground mb-4">
-                Start playing to see your typing statistics and progress over time!
+              <p className="text-muted-foreground">
+                This user hasn't played any games yet.
               </p>
-              <Button onClick={() => navigate('/')}>
-                Play Your First Game
-              </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-6">
-            {/* Coins & Streak */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/20">
+            {/* Highlight Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Type Coins</CardTitle>
-                  <Coins className="h-4 w-4 text-yellow-400" />
+                  <CardTitle className="text-sm font-medium">Fastest Speed</CardTitle>
+                  <Zap className="h-5 w-5 text-primary" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-yellow-400">{wallet?.coins || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Earn coins daily and in duels
-                  </p>
+                  <div className="text-4xl font-bold text-primary">{stats.fastestWPM}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Words Per Minute</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
+              <Card className="bg-gradient-to-br from-accent/20 to-accent/5 border-accent/30">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Daily Streak</CardTitle>
-                  <Flame className="h-4 w-4 text-orange-400" />
+                  <CardTitle className="text-sm font-medium">Average Accuracy</CardTitle>
+                  <Target className="h-5 w-5 text-accent" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-orange-400">{wallet?.current_streak || 0} days</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {wallet?.current_streak >= 365 ? '5 coins/day' :
-                     wallet?.current_streak >= 180 ? '4 coins/day' :
-                     wallet?.current_streak >= 90 ? '3 coins/day' :
-                     wallet?.current_streak >= 30 ? '2 coins/day' : '1 coin/day'}
-                  </p>
+                  <div className="text-4xl font-bold text-accent">{stats.averageAccuracy}%</div>
+                  <p className="text-xs text-muted-foreground mt-1">Typing Accuracy</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-secondary/20 to-secondary/5 border-secondary/30">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Games Played</CardTitle>
+                  <Trophy className="h-5 w-5 text-secondary-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold">{stats.totalGames}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Total Games</p>
                 </CardContent>
               </Card>
             </div>
@@ -187,31 +241,11 @@ export default function Stats() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Games Played</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalGames}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Fastest Speed</CardTitle>
-                  <Zap className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-primary">{stats.fastestWPM} WPM</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Average Speed</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-accent">{stats.averageWPM} WPM</div>
+                  <div className="text-2xl font-bold">{stats.averageWPM} WPM</div>
                 </CardContent>
               </Card>
 
@@ -231,17 +265,7 @@ export default function Stats() {
                   <Target className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-400">{stats.bestAccuracy}%</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Accuracy</CardTitle>
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-400">{stats.averageAccuracy}%</div>
+                  <div className="text-2xl font-bold">{stats.bestAccuracy}%</div>
                 </CardContent>
               </Card>
 
@@ -251,7 +275,7 @@ export default function Stats() {
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">
+                  <div className="text-2xl font-bold">
                     {Math.floor(stats.totalTimeSpent / 60)}m {stats.totalTimeSpent % 60}s
                   </div>
                 </CardContent>
