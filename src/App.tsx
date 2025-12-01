@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Leaderboard from "./pages/Leaderboard";
 import Settings from "./pages/Settings";
 import Stats from "./pages/Stats";
+import Profile from "./pages/Profile";
 import Friends from "./pages/Friends";
 import DuelResults from "./pages/DuelResults";
 import Shop from "./pages/Shop";
@@ -34,6 +35,7 @@ function AppContent() {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/stats" element={<Stats />} />
+        <Route path="/profile/:userId" element={<Profile />} />
         <Route path="/friends" element={<Friends />} />
         <Route path="/duel-results" element={<DuelResults />} />
         <Route path="/shop" element={<Shop />} />
