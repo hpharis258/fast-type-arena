@@ -5,7 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Medal, Award, Search, SlidersHorizontal } from 'lucide-react';
+import { Trophy, Medal, Award, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+} from '@/components/ui/pagination';
 
 interface LeaderboardEntry {
   id: string;
@@ -305,26 +312,120 @@ export default function Leaderboard() {
           </CardContent>
         </Card>
            {/* Pagination Controls */}
-            <div className="flex justify-between items-center mt-6">
-              <Button
-                variant="outline"
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-              >
-                Previous
-              </Button>
+            <div className="flex flex-col items-center gap-4 mt-6">
               <span className="text-sm text-muted-foreground">
-                Showing {(page - 1) * pageLength + 1}
+                Showing {totalCount === 0 ? 0 : (page - 1) * pageLength + 1}
                 {' - '}
                 {Math.min(page * pageLength, totalCount)} of {totalCount}
               </span>
-              <Button
-                variant="outline"
-                disabled={page === totalPages || totalPages === 0}
-                onClick={() => setPage(page + 1)}
-              >
-                Next
-              </Button>
+              
+              {totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    {/* First Page */}
+                    <PaginationItem>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={page === 1}
+                        onClick={() => setPage(1)}
+                        aria-label="Go to first page"
+                      >
+                        <ChevronsLeft className="h-4 w-4" />
+                      </Button>
+                    </PaginationItem>
+                    
+                    {/* Previous Page */}
+                    <PaginationItem>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
+                        aria-label="Go to previous page"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                    </PaginationItem>
+
+                    {/* Page Numbers */}
+                    {(() => {
+                      const pages: (number | 'ellipsis')[] = [];
+                      
+                      if (totalPages <= 7) {
+                        // Show all pages if 7 or fewer
+                        for (let i = 1; i <= totalPages; i++) {
+                          pages.push(i);
+                        }
+                      } else {
+                        // Always show first page
+                        pages.push(1);
+                        
+                        if (page > 3) {
+                          pages.push('ellipsis');
+                        }
+                        
+                        // Show pages around current page
+                        const start = Math.max(2, page - 1);
+                        const end = Math.min(totalPages - 1, page + 1);
+                        
+                        for (let i = start; i <= end; i++) {
+                          pages.push(i);
+                        }
+                        
+                        if (page < totalPages - 2) {
+                          pages.push('ellipsis');
+                        }
+                        
+                        // Always show last page
+                        pages.push(totalPages);
+                      }
+                      
+                      return pages.map((p, idx) => (
+                        <PaginationItem key={`${p}-${idx}`}>
+                          {p === 'ellipsis' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={() => setPage(p)}
+                              isActive={page === p}
+                              className="cursor-pointer"
+                            >
+                              {p}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ));
+                    })()}
+
+                    {/* Next Page */}
+                    <PaginationItem>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={page === totalPages}
+                        onClick={() => setPage(page + 1)}
+                        aria-label="Go to next page"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </PaginationItem>
+                    
+                    {/* Last Page */}
+                    <PaginationItem>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={page === totalPages}
+                        onClick={() => setPage(totalPages)}
+                        aria-label="Go to last page"
+                      >
+                        <ChevronsRight className="h-4 w-4" />
+                      </Button>
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
 
         
