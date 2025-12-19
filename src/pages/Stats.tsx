@@ -8,6 +8,7 @@ import { ArrowLeft, TrendingUp, Target, Zap, BarChart3, Clock, Coins, Flame, Sha
 import { StatsChart } from '@/components/StatsChart';
 import { useWallet } from '@/hooks/useWallet';
 import { useToast } from '@/hooks/use-toast';
+import { AchievementsDisplay } from '@/components/AchievementsDisplay';
 
 interface UserScore {
   id: string;
@@ -257,6 +258,9 @@ export default function Stats() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Achievements */}
+            <AchievementsDisplay userId={user.id} />
 
             {/* Progress Chart */}
             <Card>
