@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Trophy, LogOut, Settings, BarChart3, Users, Zap, User, Info, Coins, ShoppingBag, FileText, Upload, Heart, Clock, Sparkles } from 'lucide-react';
 import RacingAnimation from '@/components/RacingAnimation';
 import { useWallet } from '@/hooks/useWallet';
+import { useAchievements } from '@/hooks/useAchievements';
 import SAMPLE_TEXTS from '@/dataset/dataset';
 import { LockedPreviewBar } from '@/components/LockedPreviewBar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -81,6 +82,7 @@ export default function TypingGame() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet, awardDailyCoins } = useWallet();
+  const { checkAndAwardAchievements } = useAchievements();
 
   // Fetch user's best score for ghost racing
   const fetchBestScore = useCallback(async () => {
@@ -466,9 +468,14 @@ export default function TypingGame() {
       if (finalStats.totalChars > 0) {
         saveScore(finalStats);
         awardDailyCoins();
+        // Check and award achievements
+        checkAndAwardAchievements({
+          wpm: finalStats.wpm,
+          accuracy: finalStats.accuracy
+        });
       }
     }
-  }, [gameState, user, startTime, userInput, currentText, cumulativeStats, saveScore, awardDailyCoins]);
+  }, [gameState, user, startTime, userInput, currentText, cumulativeStats, saveScore, awardDailyCoins, checkAndAwardAchievements]);
 
   // Initialize game
   useEffect(() => {

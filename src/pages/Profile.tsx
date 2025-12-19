@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, Target, Zap, BarChart3, Clock, Share2, Trophy, User } from 'lucide-react';
 import { StatsChart } from '@/components/StatsChart';
 import { useToast } from '@/hooks/use-toast';
+import { AchievementsDisplay } from '@/components/AchievementsDisplay';
 
 interface UserScore {
   id: string;
@@ -281,6 +282,9 @@ export default function Profile() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Achievements */}
+            <AchievementsDisplay userId={userId!} />
 
             {/* Progress Chart */}
             <Card>
