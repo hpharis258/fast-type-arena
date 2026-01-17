@@ -407,7 +407,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_best_scores_per_user: {
+        Args: {
+          filter_duration_param?: number
+          page_limit?: number
+          page_offset?: number
+          search_query_param?: string
+          sort_by_param?: string
+          sort_order_param?: string
+        }
+        Returns: {
+          accuracy: number
+          correct_chars: number
+          created_at: string
+          display_name: string
+          duration: number
+          id: string
+          incorrect_chars: number
+          total_chars: number
+          total_count: number
+          user_id: string
+          wpm: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
