@@ -16,6 +16,7 @@ import {
 
 interface LeaderboardEntry {
   id: string;
+  user_id: string;
   wpm: number;
   accuracy: number;
   correct_chars: number;
@@ -23,9 +24,8 @@ interface LeaderboardEntry {
   total_chars: number;
   duration: number;
   created_at: string;
-  profiles: {
-    display_name: string | null;
-  } | null;
+  display_name: string | null;
+  total_count: number;
 }
 
 export default function Leaderboard() {
@@ -71,42 +71,18 @@ export default function Leaderboard() {
   const fetchLeaderboard = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('scores')
-        .select(`
-          id,
-          wpm,
-          accuracy,
-          correct_chars,
-          incorrect_chars,
-          total_chars,
-          duration,
-          created_at,
-          user_id,
-          profiles!inner (
-            display_name
-          )
-        `, { count: 'exact' });
+      const offset = (page - 1) * pageLength;
+      const durationParam = filterDuration !== 'all' ? parseInt(filterDuration) : null;
+      const searchParam = debouncedSearchQuery.trim() || null;
 
-      // Apply duration filter
-      if (filterDuration !== 'all') {
-        query = query.eq('duration', parseInt(filterDuration));
-      }
-
-      // Apply search filter on display_name
-      if (debouncedSearchQuery.trim()) {
-        query = query.ilike('profiles.display_name', `%${debouncedSearchQuery.trim()}%`);
-      }
-
-      // Apply sorting
-      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
-      // Apply pagination
-      const from = (page - 1) * pageLength;
-      const to = from + pageLength - 1;
-      query = query.range(from, to);
-
-      const { data, error, count } = await query;
+      const { data, error } = await supabase.rpc('get_best_scores_per_user', {
+        filter_duration_param: durationParam,
+        search_query_param: searchParam,
+        sort_by_param: sortBy,
+        sort_order_param: sortOrder,
+        page_offset: offset,
+        page_limit: pageLength
+      });
 
       if (error) {
         console.error('Error fetching leaderboard:', error);
@@ -115,8 +91,9 @@ export default function Leaderboard() {
         return;
       }
 
-      setScores(data as LeaderboardEntry[] || []);
-      setTotalCount(count || 0);
+      const entries = (data as LeaderboardEntry[]) || [];
+      setScores(entries);
+      setTotalCount(entries.length > 0 ? entries[0].total_count : 0);
     } catch (error) {
       console.error('Error:', error);
       setScores([]);
@@ -248,7 +225,7 @@ export default function Leaderboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="w-5 h-5" />
-              Top Scores
+              Best Scores (Per User)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -262,7 +239,7 @@ export default function Leaderboard() {
               <div className="space-y-2">
                 {scores.map((score, index) => {
                   const rank = (page - 1) * pageLength + index + 1; // update rank calculation
-                  const displayName = score.profiles?.display_name || 'Anonymous';
+                  const displayName = score.display_name || 'Anonymous';
 
                   // Only show trophies for top 3 on the first page
                   const showTrophy = page === 1 && rank <= 3;
