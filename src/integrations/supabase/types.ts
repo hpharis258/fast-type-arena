@@ -407,6 +407,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_profile: {
+        Args: { _profile_user_id: string; _viewer_id: string }
+        Returns: boolean
+      }
       get_best_scores_per_user: {
         Args: {
           filter_duration_param?: number
